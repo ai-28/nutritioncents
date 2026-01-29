@@ -21,8 +21,28 @@ export async function POST(request) {
 
     let extractedItems = [];
 
-    if (inputType === 'image' && (imageUrl || imageBase64)) {
-      // Image recognition
+    // Check if we're extracting barcode from image
+    const isBarcodeExtraction = inputType === 'image' &&
+      (imageUrl || imageBase64) &&
+      input &&
+      input.toLowerCase().includes('barcode');
+
+    let extractedBarcode = null;
+    if (isBarcodeExtraction) {
+      // Extract barcode number from image
+      extractedBarcode = await extractBarcodeFromImage(imageUrl || imageBase64);
+      if (extractedBarcode) {
+        // Lookup nutrition info using the extracted barcode
+        extractedItems = await extractFromBarcode(extractedBarcode);
+      } else {
+        return NextResponse.json({
+          items: [],
+          allergenAlerts: [],
+          error: 'Could not detect barcode in image. Please try again or enter manually.',
+        });
+      }
+    } else if (inputType === 'image' && (imageUrl || imageBase64)) {
+      // Image recognition for nutrition
       extractedItems = await extractFromImage(imageUrl || imageBase64);
     } else if (inputType === 'barcode' && input) {
       // Barcode lookup (placeholder - integrate with food database API)
@@ -39,6 +59,7 @@ export async function POST(request) {
     return NextResponse.json({
       items: extractedItems,
       allergenAlerts,
+      ...(extractedBarcode && { extractedBarcode }),
     });
   } catch (error) {
     console.error('Extract nutrition error:', error);
@@ -110,6 +131,46 @@ async function extractFromImage(imageUrlOrBase64) {
   }
 }
 
+// Extract barcode number from image
+async function extractBarcodeFromImage(imageUrlOrBase64) {
+  try {
+    const { default: OpenAI } = await import('openai');
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+    const imageContent = imageUrlOrBase64.startsWith('data:')
+      ? { type: "image_url", image_url: { url: imageUrlOrBase64 } }
+      : { type: "image_url", image_url: { url: imageUrlOrBase64 } };
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [{
+        role: "user",
+        content: [
+          {
+            type: "text",
+            text: "Look at this image and extract the barcode number. A barcode is typically a series of vertical lines with numbers below them. Return ONLY the barcode number as a string (digits only, no spaces or dashes). If no barcode is visible, return an empty string. Example response: \"1234567890123\""
+          },
+          imageContent
+        ]
+      }],
+      max_tokens: 50,
+    });
+
+    const barcodeText = response.choices[0].message.content.trim();
+    // Extract only digits
+    const barcode = barcodeText.match(/\d+/)?.[0] || '';
+
+    if (barcode && barcode.length >= 8) {
+      return barcode;
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Barcode extraction error:', error);
+    return null;
+  }
+}
+
 async function extractImageWithOpenAI(imageUrlOrBase64) {
   try {
     const { default: OpenAI } = await import('openai');
@@ -139,9 +200,9 @@ async function extractImageWithOpenAI(imageUrlOrBase64) {
     // Handle both {items: [...]} and direct array responses
     if (Array.isArray(content)) {
       return content;
-    } else if (Array.isArray(content.items)) {
+    } else if (content && Array.isArray(content.items)) {
       return content.items;
-    } else if (content.food_name) {
+    } else if (content && content.food_name) {
       // Single item wrapped in object
       return [content];
     } else {

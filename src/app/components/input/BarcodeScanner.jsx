@@ -166,19 +166,30 @@ export function BarcodeScanner({ onBarcodeScanned, disabled }) {
 
       const data = await response.json();
       
-      // Try to extract barcode from the response
-      // OpenAI might return it in various formats, so we'll search for a number pattern
-      const text = data.items?.[0]?.food_name || JSON.stringify(data);
-      const barcodeMatch = text.match(/\b\d{8,14}\b/); // Match 8-14 digit barcode
-      
-      if (barcodeMatch) {
-        const extractedBarcode = barcodeMatch[0];
+      // Check if barcode was extracted and returned in response
+      if (data.extractedBarcode) {
+        const extractedBarcode = data.extractedBarcode;
         setBarcode(extractedBarcode);
         toast.success(`Barcode detected: ${extractedBarcode}`);
         
-        // Automatically lookup the barcode
+        // Automatically lookup the barcode (nutrition info already loaded in data.items)
         if (onBarcodeScanned) {
           await onBarcodeScanned(extractedBarcode);
+        }
+      } else if (data.error) {
+        toast.error(data.error);
+      } else if (data.items && data.items.length > 0) {
+        // If we got nutrition items, the barcode was successfully extracted and looked up
+        // Try to get barcode from the first item
+        const barcodeFromItem = data.items[0]?.barcode;
+        if (barcodeFromItem) {
+          setBarcode(barcodeFromItem);
+          toast.success(`Barcode detected: ${barcodeFromItem}`);
+        }
+        
+        // Call the callback with the barcode or the first item's barcode
+        if (onBarcodeScanned) {
+          await onBarcodeScanned(barcodeFromItem || '');
         }
       } else {
         toast.warning('Could not detect barcode in image. Please try again or enter manually.');
