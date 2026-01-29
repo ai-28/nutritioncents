@@ -11,6 +11,7 @@ export function VoiceInput({ onTranscript, disabled }) {
   const [permissionGranted, setPermissionGranted] = useState(false);
   const recognitionRef = useRef(null);
   const finalTranscriptRef = useRef(''); // Store accumulated final transcript
+  const shouldRestartRef = useRef(false); // Track if we should restart after auto-end
 
   // Request permission on component mount
   useEffect(() => {
@@ -67,36 +68,90 @@ export function VoiceInput({ onTranscript, disabled }) {
 
       recognitionRef.current.onerror = (event) => {
         console.error('Speech recognition error:', event.error, event);
-        setIsListening(false);
         
         switch (event.error) {
           case 'no-speech':
-            toast.error('No speech detected. Please try again.');
+            // Don't stop on no-speech if user is still in listening mode
+            // Just restart silently
+            if (shouldRestartRef.current) {
+              setTimeout(() => {
+                if (shouldRestartRef.current && recognitionRef.current) {
+                  try {
+                    recognitionRef.current.start();
+                  } catch (e) {
+                    console.error('Error restarting after no-speech:', e);
+                  }
+                }
+              }, 100);
+            }
             break;
           case 'not-allowed':
             toast.error('Microphone permission denied. Please allow microphone access.');
             setPermissionGranted(false);
+            setIsListening(false);
+            shouldRestartRef.current = false;
             break;
           case 'aborted':
             // User stopped or navigated away - not an error
+            shouldRestartRef.current = false;
+            setIsListening(false);
             break;
           case 'network':
             toast.error('Network error. Please check your connection.');
+            setIsListening(false);
+            shouldRestartRef.current = false;
             break;
           case 'audio-capture':
             toast.error('No microphone found. Please check your microphone.');
+            setIsListening(false);
+            shouldRestartRef.current = false;
             break;
           case 'service-not-allowed':
             toast.error('Speech recognition service not available.');
+            setIsListening(false);
+            shouldRestartRef.current = false;
             break;
           default:
-            toast.error(`Speech recognition error: ${event.error}. Please try again.`);
+            // For other errors, try to restart if still in listening mode
+            if (shouldRestartRef.current) {
+              setTimeout(() => {
+                if (shouldRestartRef.current && recognitionRef.current) {
+                  try {
+                    recognitionRef.current.start();
+                  } catch (e) {
+                    console.error('Error restarting after error:', e);
+                    setIsListening(false);
+                    shouldRestartRef.current = false;
+                  }
+                }
+              }, 500);
+            } else {
+              setIsListening(false);
+            }
         }
       };
 
       recognitionRef.current.onend = () => {
         console.log('Speech recognition ended');
-        setIsListening(false);
+        
+        // If user hasn't manually stopped, restart recognition
+        if (shouldRestartRef.current) {
+          console.log('Auto-restarting recognition...');
+          setTimeout(() => {
+            if (shouldRestartRef.current && recognitionRef.current) {
+              try {
+                recognitionRef.current.start();
+              } catch (error) {
+                console.error('Error restarting recognition:', error);
+                // If restart fails, stop listening
+                setIsListening(false);
+                shouldRestartRef.current = false;
+              }
+            }
+          }, 100);
+        } else {
+          setIsListening(false);
+        }
       };
     }
 
@@ -138,11 +193,15 @@ export function VoiceInput({ onTranscript, disabled }) {
       finalTranscriptRef.current = '';
       setTranscript('');
       
+      // Set flag to allow auto-restart
+      shouldRestartRef.current = true;
+      
       recognitionRef.current.start();
-      toast.success('Listening... Speak now.');
+      toast.success('Listening... Speak now. Click Stop when finished.');
     } catch (error) {
       console.error('Error starting recognition:', error);
       setIsListening(false);
+      shouldRestartRef.current = false;
       
       if (error.name === 'InvalidStateError') {
         toast.error('Recognition is already running. Please stop first.');
@@ -155,12 +214,15 @@ export function VoiceInput({ onTranscript, disabled }) {
   const stopListening = () => {
     if (recognitionRef.current && isListening) {
       try {
+        // Set flag to prevent auto-restart
+        shouldRestartRef.current = false;
         recognitionRef.current.stop();
         setIsListening(false);
         toast.success('Stopped listening.');
       } catch (error) {
         console.error('Error stopping recognition:', error);
         setIsListening(false);
+        shouldRestartRef.current = false;
       }
     }
   };
