@@ -110,28 +110,20 @@ export function VoiceInput({ onTranscript, disabled }) {
       };
 
       mediaRecorder.onstop = async () => {
-        console.log('MediaRecorder stopped, total chunks before final request:', audioChunksRef.current.length);
+        console.log('MediaRecorder stopped, total chunks:', audioChunksRef.current.length);
         
-        // Request any remaining data explicitly (in case it wasn't already requested)
-        if (mediaRecorderRef.current) {
+        // Close audio context if still open
+        if (mediaRecorderRef.current?._audioContext) {
           try {
-            // Even if state is inactive, try to request data
-            mediaRecorderRef.current.requestData();
-            console.log('Requested final data');
+            mediaRecorderRef.current._audioContext.close();
           } catch (e) {
-            console.warn('Could not request final data:', e);
+            // Ignore if already closed
           }
         }
         
-        // Wait for data to arrive (with timeout)
-        let waitCount = 0;
-        const maxWait = 10; // 10 * 50ms = 500ms max wait
-        while (audioChunksRef.current.length === 0 && waitCount < maxWait) {
-          await new Promise(resolve => setTimeout(resolve, 50));
-          waitCount++;
-        }
-        
-        console.log('Total chunks after stop:', audioChunksRef.current.length, 'waited:', waitCount * 50, 'ms');
+        // Calculate total size
+        const totalSize = audioChunksRef.current.reduce((sum, chunk) => sum + (chunk.size || 0), 0);
+        console.log('Total chunks after stop:', audioChunksRef.current.length, 'total size:', totalSize, 'bytes');
         
         // Stop all tracks
         if (streamRef.current) {
@@ -163,11 +155,26 @@ export function VoiceInput({ onTranscript, disabled }) {
         }
       }
       
-      // Start recording with a small timeslice to ensure data collection
-      // Using 250ms timeslice ensures we get data even for short recordings
-      // This will trigger ondataavailable every 250ms
+      // Set up audio level monitoring to verify audio is being captured
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const analyser = audioContext.createAnalyser();
+      const microphone = audioContext.createMediaStreamSource(stream);
+      microphone.connect(analyser);
+      analyser.fftSize = 256;
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+      
+      // Check audio levels periodically
+      const checkAudioLevel = () => {
+        analyser.getByteFrequencyData(dataArray);
+        const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
+        return average;
+      };
+      
+      // Start recording WITH timeslice to ensure data collection
+      // Using 500ms timeslice - this triggers ondataavailable every 500ms
+      // This ensures we get data even if the recording is short
       try {
-        mediaRecorder.start(250);
+        mediaRecorder.start(500);
         console.log('✅ Recording started, MIME type:', mimeType, 'state:', mediaRecorder.state);
         
         // Verify recording actually started
@@ -182,16 +189,12 @@ export function VoiceInput({ onTranscript, disabled }) {
         const recordingCheck = setInterval(() => {
           if (mediaRecorder.state === 'recording') {
             const totalSize = audioChunksRef.current.reduce((sum, chunk) => sum + (chunk.size || 0), 0);
-            console.log('📊 Recording active, chunks:', audioChunksRef.current.length, 'total size:', totalSize, 'bytes');
+            const audioLevel = checkAudioLevel();
+            console.log('📊 Recording active, chunks:', audioChunksRef.current.length, 'total size:', totalSize, 'bytes', 'audio level:', audioLevel.toFixed(2));
             
-            // If no chunks after 1 second, manually request data
-            if (audioChunksRef.current.length === 0 && totalSize === 0) {
-              console.warn('⚠️ No chunks collected yet, manually requesting data...');
-              try {
-                mediaRecorder.requestData();
-              } catch (e) {
-                console.warn('Could not manually request data:', e);
-              }
+            // If audio level is 0, warn user
+            if (audioLevel < 1) {
+              console.warn('⚠️ No audio detected - check microphone');
             }
             
             // Check if stream is still active
@@ -201,20 +204,26 @@ export function VoiceInput({ onTranscript, disabled }) {
                 if (track.readyState !== 'live') {
                   console.warn('⚠️ Track not live:', track.label, 'state:', track.readyState);
                 }
+                if (track.muted) {
+                  console.warn('⚠️ Track is muted:', track.label);
+                }
               });
             }
           } else {
             console.warn('⚠️ Recording state changed to:', mediaRecorder.state);
             clearInterval(recordingCheck);
+            audioContext.close();
           }
         }, 1000);
         
-        // Store interval ID for cleanup
+        // Store interval ID and audio context for cleanup
         mediaRecorder._checkInterval = recordingCheck;
+        mediaRecorder._audioContext = audioContext;
         
         toast.success('Recording... Speak your meal description. Click Stop when finished.');
       } catch (startError) {
         console.error('❌ Error starting MediaRecorder:', startError);
+        audioContext.close();
         throw startError;
       }
     } catch (error) {
@@ -224,7 +233,7 @@ export function VoiceInput({ onTranscript, disabled }) {
     }
   };
 
-  const stopRecording = () => {
+  const stopRecording = async () => {
     if (mediaRecorderRef.current && isRecording) {
       try {
         console.log('Stopping recording, current state:', mediaRecorderRef.current.state);
@@ -235,26 +244,38 @@ export function VoiceInput({ onTranscript, disabled }) {
           clearInterval(mediaRecorderRef.current._checkInterval);
         }
         
+        // Close audio context
+        if (mediaRecorderRef.current._audioContext) {
+          mediaRecorderRef.current._audioContext.close();
+        }
+        
         // Request any pending data before stopping
         if (mediaRecorderRef.current.state === 'recording') {
           try {
+            // Request data explicitly - this should trigger ondataavailable
             mediaRecorderRef.current.requestData();
             console.log('Requested data before stopping');
+            
             // Wait a moment for the data to arrive
-            setTimeout(() => {
-              console.log('Chunks after requestData:', audioChunksRef.current.length);
-            }, 100);
+            await new Promise(resolve => setTimeout(resolve, 200));
+            console.log('Chunks after requestData:', audioChunksRef.current.length);
           } catch (e) {
             console.warn('Could not request data before stopping:', e);
           }
         }
         
-        // Stop the recorder
+        // Stop the recorder - this will trigger ondataavailable with final data
         mediaRecorderRef.current.stop();
         setIsRecording(false);
         
+        // Wait a bit for ondataavailable to fire with final data
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
         // Check if we have any chunks
-        if (audioChunksRef.current.length === 0) {
+        const totalSize = audioChunksRef.current.reduce((sum, chunk) => sum + (chunk.size || 0), 0);
+        console.log('Final check - chunks:', audioChunksRef.current.length, 'total size:', totalSize);
+        
+        if (audioChunksRef.current.length === 0 || totalSize === 0) {
           console.error('No audio chunks collected!');
           toast.error('No audio was recorded. Please check your microphone and try again.');
           return;
