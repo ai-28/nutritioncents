@@ -73,17 +73,23 @@ export function VoiceInput({ onTranscript, disabled }) {
       mediaRecorderRef.current = mediaRecorder;
 
       mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
+        if (event.data && event.data.size > 0) {
+          console.log('Audio chunk received:', event.data.size, 'bytes');
           audioChunksRef.current.push(event.data);
         }
       };
 
       mediaRecorder.onstop = async () => {
+        console.log('MediaRecorder stopped, total chunks:', audioChunksRef.current.length);
+        
         // Stop all tracks
         if (streamRef.current) {
           streamRef.current.getTracks().forEach(track => track.stop());
           streamRef.current = null;
         }
+
+        // Small delay to ensure all data is available
+        await new Promise(resolve => setTimeout(resolve, 100));
 
         // Transcribe audio
         await transcribeAudio();
@@ -95,10 +101,20 @@ export function VoiceInput({ onTranscript, disabled }) {
         setIsRecording(false);
       };
 
+      // Check MediaRecorder state before starting
+      if (mediaRecorder.state !== 'inactive') {
+        console.warn('MediaRecorder not in inactive state:', mediaRecorder.state);
+        mediaRecorder.stop();
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      
       // Start recording
-      mediaRecorder.start(1000); // Collect data every second for better reliability
+      // Use timeslice to collect data periodically (every 1 second)
+      // This ensures we capture data even if recording stops unexpectedly
+      mediaRecorder.start(1000);
       setIsRecording(true);
       setTranscript('');
+      console.log('Recording started, MIME type:', mimeType, 'state:', mediaRecorder.state);
       toast.success('Recording... Speak your meal description. Click Stop when finished.');
     } catch (error) {
       console.error('Error starting recording:', error);
@@ -110,19 +126,30 @@ export function VoiceInput({ onTranscript, disabled }) {
   const stopRecording = () => {
     if (mediaRecorderRef.current && isRecording) {
       try {
+        console.log('Stopping recording, chunks collected:', audioChunksRef.current.length);
         mediaRecorderRef.current.stop();
         setIsRecording(false);
-        toast.success('Processing your speech...');
+        
+        // Ensure we have chunks before showing processing message
+        if (audioChunksRef.current.length > 0) {
+          toast.success('Processing your speech...');
+        } else {
+          toast.warning('No audio data recorded. Please try again.');
+        }
       } catch (error) {
         console.error('Error stopping recording:', error);
         setIsRecording(false);
+        toast.error('Error stopping recording. Please try again.');
       }
     }
   };
 
   const transcribeAudio = async () => {
+    console.log('Transcribing audio, chunks:', audioChunksRef.current.length);
+    
     if (audioChunksRef.current.length === 0) {
-      toast.error('No audio recorded.');
+      console.error('No audio chunks available');
+      toast.error('No audio recorded. Please try again.');
       return;
     }
 
@@ -130,11 +157,21 @@ export function VoiceInput({ onTranscript, disabled }) {
 
     try {
       // Combine audio chunks into a single blob
+      const mimeType = mediaRecorderRef.current?.mimeType || 'audio/webm';
       const audioBlob = new Blob(audioChunksRef.current, { 
-        type: mediaRecorderRef.current?.mimeType || 'audio/webm' 
+        type: mimeType
       });
       
+      console.log('Audio blob created:', audioBlob.size, 'bytes, type:', mimeType);
+      
       // Validate blob size (Whisper has a 25MB limit)
+      if (audioBlob.size === 0) {
+        toast.error('No audio data recorded. Please try again.');
+        setIsTranscribing(false);
+        audioChunksRef.current = [];
+        return;
+      }
+      
       if (audioBlob.size > 25 * 1024 * 1024) {
         toast.error('Audio file is too large. Please record a shorter message.');
         setIsTranscribing(false);
@@ -144,7 +181,10 @@ export function VoiceInput({ onTranscript, disabled }) {
       
       // Create FormData
       const formData = new FormData();
-      formData.append('audio', audioBlob, 'recording.webm');
+      const fileName = mimeType.includes('webm') ? 'recording.webm' : 'recording.mp4';
+      formData.append('audio', audioBlob, fileName);
+      
+      console.log('Sending audio to transcription API...');
 
       // Send to Whisper API
       const response = await fetch('/api/transcribe', {

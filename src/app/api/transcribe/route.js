@@ -23,17 +23,50 @@ export async function POST(request) {
       );
     }
 
-    // Convert File to Buffer
-    const audioBlob = await audioFile.arrayBuffer();
-    const audioBuffer = Buffer.from(audioBlob);
+    // Log file info for debugging
+    console.log('Received audio file:', {
+      name: audioFile.name,
+      type: audioFile.type,
+      size: audioFile.size,
+    });
+
+    // Check file size
+    const fileSize = audioFile.size || 0;
+    console.log('Received audio file:', {
+      name: audioFile.name,
+      type: audioFile.type,
+      size: fileSize,
+    });
+
+    if (fileSize === 0) {
+      return NextResponse.json(
+        { error: 'Empty audio file received' },
+        { status: 400 }
+      );
+    }
 
     // Call OpenAI Whisper API
     const { default: OpenAI } = await import('openai');
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-    // Create a File-like object for OpenAI
-    // Whisper accepts various audio formats: mp3, mp4, mpeg, mpga, m4a, wav, webm
-    const file = new File([audioBuffer], 'audio.webm', { type: 'audio/webm' });
+    // OpenAI SDK accepts File, Blob, or Buffer
+    // In Next.js API routes, FormData files are already File objects
+    // We can use the file directly, but we need to ensure it's in the right format
+    // Convert to Buffer first, then create a File with proper metadata
+    const audioBlob = await audioFile.arrayBuffer();
+    const audioBuffer = Buffer.from(audioBlob);
+    
+    console.log('Audio buffer size:', audioBuffer.length, 'bytes');
+
+    // Create a File object from the buffer
+    // OpenAI SDK needs a File with name and type
+    const fileName = audioFile.name || 'recording.webm';
+    const fileType = audioFile.type || 'audio/webm';
+    
+    // Use File constructor (available in Node.js 18+)
+    const file = new File([audioBuffer], fileName, { type: fileType });
+    
+    console.log('Sending to Whisper API, file:', fileName, 'type:', fileType, 'size:', file.size);
 
     const transcription = await openai.audio.transcriptions.create({
       file: file,
