@@ -409,24 +409,29 @@ export function ImageUpload({ onImageUpload, disabled, analyzing }) {
               </div>
             )}
             {cameraStream && (
-              <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-4 p-4">
+              <>
+                {/* Cancel button in top right */}
                 <Button
                   type="button"
                   variant="secondary"
                   onClick={stopCamera}
-                  className="rounded-full"
+                  className="absolute top-4 right-4 rounded-full"
+                  size="icon"
                 >
-                  Cancel
+                  <X className="w-4 h-4" />
                 </Button>
-                <Button
-                  type="button"
-                  onClick={capturePhoto}
-                  className="rounded-full w-16 h-16 bg-white hover:bg-white/90 shadow-lg"
-                >
-                  <div className="w-12 h-12 rounded-full border-4 border-gray-800"></div>
-                </Button>
-                <div className="w-16"></div> {/* Spacer for centering */}
-              </div>
+                
+                {/* Capture button at bottom center */}
+                <div className="absolute bottom-4 left-0 right-0 flex justify-center p-4">
+                  <Button
+                    type="button"
+                    onClick={capturePhoto}
+                    className="rounded-full w-16 h-16 bg-white hover:bg-white/90 shadow-lg"
+                  >
+                    <div className="w-12 h-12 rounded-full border-4 border-gray-800"></div>
+                  </Button>
+                </div>
+              </>
             )}
           </div>
         </DialogContent>
