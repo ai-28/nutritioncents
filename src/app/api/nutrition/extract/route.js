@@ -120,7 +120,7 @@ async function extractImageWithOpenAI(imageUrlOrBase64) {
       : { type: "image_url", image_url: { url: imageUrlOrBase64 } };
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4-vision-preview",
+      model: "gpt-4o",
       messages: [{
         role: "user",
         content: [
