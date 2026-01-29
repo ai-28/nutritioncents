@@ -386,7 +386,11 @@ export function ImageUpload({ onImageUpload, disabled, analyzing }) {
       )}
 
       {/* Camera Dialog with Live Preview */}
-      <Dialog open={showCamera} onOpenChange={(open) => !open && stopCamera()}>
+      <Dialog open={showCamera} onOpenChange={(open) => {
+        if (!open) {
+          stopCamera();
+        }
+      }}>
         <DialogContent className="sm:max-w-[95vw] max-w-[95vw] p-0 gap-0">
           <DialogHeader className="p-4 pb-2">
             <DialogTitle>Take Food Photo</DialogTitle>
@@ -409,29 +413,16 @@ export function ImageUpload({ onImageUpload, disabled, analyzing }) {
               </div>
             )}
             {cameraStream && (
-              <>
-                {/* Cancel button in top right */}
+              /* Capture button at bottom center */
+              <div className="absolute bottom-4 left-0 right-0 flex justify-center p-4">
                 <Button
                   type="button"
-                  variant="secondary"
-                  onClick={stopCamera}
-                  className="absolute top-4 right-4 rounded-full"
-                  size="icon"
+                  onClick={capturePhoto}
+                  className="rounded-full w-16 h-16 bg-white hover:bg-white/90 shadow-lg"
                 >
-                  <X className="w-4 h-4" />
+                  <div className="w-12 h-12 rounded-full border-4 border-gray-800"></div>
                 </Button>
-                
-                {/* Capture button at bottom center */}
-                <div className="absolute bottom-4 left-0 right-0 flex justify-center p-4">
-                  <Button
-                    type="button"
-                    onClick={capturePhoto}
-                    className="rounded-full w-16 h-16 bg-white hover:bg-white/90 shadow-lg"
-                  >
-                    <div className="w-12 h-12 rounded-full border-4 border-gray-800"></div>
-                  </Button>
-                </div>
-              </>
+              </div>
             )}
           </div>
         </DialogContent>
