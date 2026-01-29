@@ -268,13 +268,9 @@ async function extractFromBarcode(barcode) {
 async function extractFromBarcodeWithOpenAI(barcode) {
   try {
     const { default: OpenAI } = await import('openai');
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [{
-        role: "user",
-        content: `Look up product information for barcode/UPC code: ${barcode}. Return a JSON object with the following structure:
+    const prompt = `Look up product information for barcode/UPC code: ${barcode}. Return a JSON object with the following structure:
 {
   "items": [{
     "food_name": "Product name",
@@ -289,16 +285,30 @@ async function extractFromBarcodeWithOpenAI(barcode) {
   }]
 }
 
-If you cannot find the product, return an empty items array. Be as accurate as possible with nutrition estimates.`
-      }],
+If you cannot find the product, return an empty items array. Be as accurate as possible with nutrition estimates.`;
+
+    const completion = await client.responses.create({
+      model: "gpt-5.1",
+      input: prompt,
       tools: [
         { type: "web_search" }
       ],
-      response_format: { type: "json_object" },
-      max_tokens: 500,
+      temperature: 0.3
     });
 
-    const content = JSON.parse(response.choices[0].message.content);
+    // Parse response - adjust based on your API's response structure
+    let content;
+    if (typeof completion === 'string') {
+      content = JSON.parse(completion);
+    } else if (completion.content) {
+      content = JSON.parse(completion.content);
+    } else if (completion.response) {
+      content = JSON.parse(completion.response);
+    } else if (completion.text) {
+      content = JSON.parse(completion.text);
+    } else {
+      content = completion;
+    }
 
     if (content && Array.isArray(content.items) && content.items.length > 0) {
       return content.items;
