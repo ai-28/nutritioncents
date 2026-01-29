@@ -291,6 +291,9 @@ async function extractFromBarcodeWithOpenAI(barcode) {
 
 If you cannot find the product, return an empty items array. Be as accurate as possible with nutrition estimates.`
       }],
+      tools: [
+        { type: "web_search" }
+      ],
       response_format: { type: "json_object" },
       max_tokens: 500,
     });
