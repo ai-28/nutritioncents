@@ -270,11 +270,7 @@ async function extractFromBarcodeWithOpenAI(barcode) {
     const { default: OpenAI } = await import('openai');
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [{
-        role: "user",
-        content: `Look up product information for barcode/UPC code: ${barcode}. Return a JSON object with the following structure:
+    const prompt = `Look up product information for barcode/UPC code: ${barcode}. Use web search to find accurate product details and nutrition information. Return a JSON object with the following structure:
 {
   "items": [{
     "food_name": "Product name",
@@ -289,16 +285,54 @@ async function extractFromBarcodeWithOpenAI(barcode) {
   }]
 }
 
-If you cannot find the product, return an empty items array. Be as accurate as possible with nutrition estimates.`
-      }],
-      tools: [
-        { type: "web_search" }
-      ],
-      response_format: { type: "json_object" },
-      max_tokens: 500,
-    });
+If you cannot find the product, return an empty items array. Be as accurate as possible with nutrition estimates based on web search results.`;
 
-    const content = JSON.parse(response.choices[0].message.content);
+    let content;
+
+    // Try using responses.create with web_search tool (if available)
+    if (openai.responses && typeof openai.responses.create === 'function') {
+      try {
+        const completion = await openai.responses.create({
+          model: "gpt-4o", // or "gpt-5.1" if available
+          input: prompt,
+          tools: [
+            { type: "web_search" }
+          ],
+          temperature: 0.3
+        });
+
+        // Handle response format from responses.create
+        const responseText = completion.output || completion.text || JSON.stringify(completion);
+        content = JSON.parse(responseText);
+      } catch (responsesError) {
+        console.log('responses.create not available, trying chat.completions.create...', responsesError.message);
+        // Fallback to chat.completions.create
+        const response = await openai.chat.completions.create({
+          model: "gpt-4o",
+          messages: [{
+            role: "user",
+            content: prompt
+          }],
+          response_format: { type: "json_object" },
+          temperature: 0.3,
+          max_tokens: 500,
+        });
+        content = JSON.parse(response.choices[0].message.content);
+      }
+    } else {
+      // Use standard chat.completions.create
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [{
+          role: "user",
+          content: prompt
+        }],
+        response_format: { type: "json_object" },
+        temperature: 0.3,
+        max_tokens: 500,
+      });
+      content = JSON.parse(response.choices[0].message.content);
+    }
 
     if (content && Array.isArray(content.items) && content.items.length > 0) {
       return content.items;
