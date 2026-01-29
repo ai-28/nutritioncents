@@ -309,7 +309,24 @@ function AddMealPageInner() {
           {inputMethod === 'image' && (
             <div>
               <label className="text-sm font-medium mb-2 block">Upload Food Photo</label>
-              <ImageUpload onImageUpload={handleImageUpload} disabled={extracting} />
+              <ImageUpload 
+                onImageUpload={handleImageUpload} 
+                disabled={extracting} 
+                analyzing={extracting}
+              />
+              {extracting && (
+                <div className="mt-2 p-3 bg-primary/10 border border-primary/20 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                    <span className="text-sm text-primary font-medium">
+                      AI is analyzing your food image...
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1 ml-6">
+                    Identifying food items and calculating nutrition values
+                  </p>
+                </div>
+              )}
             </div>
           )}
 

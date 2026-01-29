@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { Image as ImageIcon, X, Upload } from 'lucide-react';
+import { Image as ImageIcon, X, Upload, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
@@ -109,7 +109,7 @@ async function compressImage(file, targetSizeBytes) {
   });
 }
 
-export function ImageUpload({ onImageUpload, disabled }) {
+export function ImageUpload({ onImageUpload, disabled, analyzing }) {
   const [preview, setPreview] = useState(null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
@@ -200,14 +200,22 @@ export function ImageUpload({ onImageUpload, disabled }) {
           <img
             src={preview}
             alt="Food preview"
-            className="w-full h-48 object-cover rounded-lg"
+            className="w-full max-h-96 object-contain rounded-lg bg-muted"
           />
+          {analyzing && (
+            <div className="absolute inset-0 bg-black/50 rounded-lg flex flex-col items-center justify-center backdrop-blur-sm">
+              <div className="animate-spin rounded-full h-12 w-12 border-4 border-white border-t-transparent mb-3"></div>
+              <p className="text-white font-medium">Analyzing food image...</p>
+              <p className="text-white/80 text-sm mt-1">Extracting nutrition information</p>
+            </div>
+          )}
           <Button
             type="button"
             variant="destructive"
             size="icon"
             className="absolute top-2 right-2"
             onClick={handleRemove}
+            disabled={analyzing}
           >
             <X className="w-4 h-4" />
           </Button>
