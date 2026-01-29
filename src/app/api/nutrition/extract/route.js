@@ -296,22 +296,55 @@ If you cannot find the product, return an empty items array. Be as accurate as p
       temperature: 0.3
     });
 
-    // Parse response - adjust based on your API's response structure
+    // Debug: log the completion structure
+    console.log('Completion type:', typeof completion);
+    console.log('Completion keys:', completion && typeof completion === 'object' ? Object.keys(completion) : 'N/A');
+
+    // Parse response - handle different response structures
     let content;
     if (typeof completion === 'string') {
+      // If it's a string, parse it
       content = JSON.parse(completion);
-    } else if (completion.content) {
-      content = JSON.parse(completion.content);
-    } else if (completion.response) {
-      content = JSON.parse(completion.response);
-    } else if (completion.text) {
-      content = JSON.parse(completion.text);
+    } else if (completion && typeof completion === 'object') {
+      // If it's an object, check for nested content
+      if (completion.content) {
+        // If content is a string, parse it; otherwise use it directly
+        content = typeof completion.content === 'string'
+          ? JSON.parse(completion.content)
+          : completion.content;
+      } else if (completion.response) {
+        content = typeof completion.response === 'string'
+          ? JSON.parse(completion.response)
+          : completion.response;
+      } else if (completion.text) {
+        content = typeof completion.text === 'string'
+          ? JSON.parse(completion.text)
+          : completion.text;
+      } else if (completion.data) {
+        content = typeof completion.data === 'string'
+          ? JSON.parse(completion.data)
+          : completion.data;
+      } else {
+        // Use the object directly - it might already be the parsed content
+        content = completion;
+      }
     } else {
       content = completion;
     }
 
-    if (content && Array.isArray(content.items) && content.items.length > 0) {
-      return content.items;
+    // Handle the response format - check if items are nested or direct
+    let items = [];
+    if (content && Array.isArray(content.items)) {
+      items = content.items;
+    } else if (content && Array.isArray(content)) {
+      items = content;
+    } else if (content && content.food_name) {
+      // Single item
+      items = [content];
+    }
+
+    if (items.length > 0) {
+      return items;
     }
 
     return [];
