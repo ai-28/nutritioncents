@@ -216,12 +216,23 @@ async function extractImageWithOpenAI(imageUrlOrBase64) {
 }
 
 
-// Barcode lookup (placeholder - integrate with OpenFoodFacts or similar)
+// Barcode lookup with multiple fallbacks
 async function extractFromBarcode(barcode) {
+  // Normalize barcode (remove leading zeros for some APIs, but keep original for OpenFoodFacts)
+  const normalizedBarcode = barcode.trim();
+  const barcodeWithoutLeadingZeros = normalizedBarcode.replace(/^0+/, '') || normalizedBarcode;
+
   try {
-    // Example: OpenFoodFacts API
-    const response = await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json`);
-    const data = await response.json();
+    // Try OpenFoodFacts API first with original barcode
+    let response = await fetch(`https://world.openfoodfacts.org/api/v0/product/${normalizedBarcode}.json`);
+    let data = await response.json();
+
+    // If not found and barcode has leading zeros, try without them
+    if (data.status === 0 && normalizedBarcode !== barcodeWithoutLeadingZeros) {
+      console.log(`Trying barcode without leading zeros: ${barcodeWithoutLeadingZeros}`);
+      response = await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcodeWithoutLeadingZeros}.json`);
+      data = await response.json();
+    }
 
     if (data.status === 1 && data.product) {
       const product = data.product;
@@ -237,11 +248,64 @@ async function extractFromBarcode(barcode) {
         confidence_score: 1.0,
       }];
     }
+
+    // Fallback: Use OpenAI to look up product information
+    console.log(`Barcode ${barcode} not found in OpenFoodFacts, trying OpenAI lookup...`);
+    return await extractFromBarcodeWithOpenAI(barcode);
   } catch (error) {
     console.error('Barcode lookup error:', error);
+    // Try OpenAI as fallback even on error
+    try {
+      return await extractFromBarcodeWithOpenAI(barcode);
+    } catch (openaiError) {
+      console.error('OpenAI barcode lookup error:', openaiError);
+      return [];
+    }
   }
+}
 
-  return [];
+// Fallback: Use OpenAI to look up product by barcode
+async function extractFromBarcodeWithOpenAI(barcode) {
+  try {
+    const { default: OpenAI } = await import('openai');
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [{
+        role: "user",
+        content: `Look up product information for barcode/UPC code: ${barcode}. Return a JSON object with the following structure:
+{
+  "items": [{
+    "food_name": "Product name",
+    "quantity": 100,
+    "unit": "g",
+    "calories": estimated calories per 100g,
+    "protein": estimated protein in grams per 100g,
+    "carbs": estimated carbs in grams per 100g,
+    "fats": estimated fats in grams per 100g,
+    "barcode": "${barcode}",
+    "confidence_score": 0.8
+  }]
+}
+
+If you cannot find the product, return an empty items array. Be as accurate as possible with nutrition estimates.`
+      }],
+      response_format: { type: "json_object" },
+      max_tokens: 500,
+    });
+
+    const content = JSON.parse(response.choices[0].message.content);
+
+    if (content && Array.isArray(content.items) && content.items.length > 0) {
+      return content.items;
+    }
+
+    return [];
+  } catch (error) {
+    console.error('OpenAI barcode lookup error:', error);
+    return [];
+  }
 }
 
 // Fallback: Simple pattern matching
