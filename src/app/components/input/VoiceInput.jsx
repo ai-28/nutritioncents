@@ -73,7 +73,11 @@ export function VoiceInput({ onTranscript, disabled }) {
         muted: activeTrack.muted
       });
       
-      streamRef.current = stream;
+      // Clone the stream to avoid conflicts if multiple consumers need it
+      // This ensures MediaRecorder gets its own stream
+      const clonedStream = stream.clone();
+      
+      streamRef.current = stream; // Keep original for cleanup
       audioChunksRef.current = [];
       
       // Determine best MIME type for browser
@@ -87,8 +91,8 @@ export function VoiceInput({ onTranscript, disabled }) {
       
       console.log('Using MIME type:', mimeType, 'supported:', MediaRecorder.isTypeSupported(mimeType));
       
-      // Create MediaRecorder
-      const mediaRecorder = new MediaRecorder(stream, {
+      // Create MediaRecorder with cloned stream
+      const mediaRecorder = new MediaRecorder(clonedStream, {
         mimeType: mimeType
       });
       
@@ -193,27 +197,19 @@ export function VoiceInput({ onTranscript, disabled }) {
         throw new Error(`MediaRecorder in unexpected state: ${mediaRecorder.state}`);
       }
       
-      // Set up audio level monitoring to verify audio is being captured
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      const analyser = audioContext.createAnalyser();
-      const microphone = audioContext.createMediaStreamSource(stream);
-      microphone.connect(analyser);
-      analyser.fftSize = 256;
-      const dataArray = new Uint8Array(analyser.frequencyBinCount);
-      
-      // Check audio levels periodically
-      const checkAudioLevel = () => {
-        analyser.getByteFrequencyData(dataArray);
-        const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
-        return average;
-      };
-      
       // Start recording WITH timeslice to ensure data collection
       // Using 500ms timeslice - this triggers ondataavailable every 500ms
       // This ensures we get data even if the recording is short
       try {
         console.log('🚀 About to start MediaRecorder, current state:', mediaRecorder.state);
-        console.log('🚀 Stream active:', stream.active, 'tracks:', stream.getTracks().length);
+        console.log('🚀 Original stream active:', stream.active, 'tracks:', stream.getAudioTracks().length);
+        console.log('🚀 Cloned stream active:', clonedStream.active, 'tracks:', clonedStream.getAudioTracks().length);
+        
+        // Check cloned stream tracks before starting (this is what MediaRecorder uses)
+        const clonedTracks = clonedStream.getAudioTracks();
+        clonedTracks.forEach(track => {
+          console.log('Cloned track before start:', track.label, 'enabled:', track.enabled, 'readyState:', track.readyState, 'muted:', track.muted);
+        });
         
         mediaRecorder.start(500);
         console.log('✅ Recording started, MIME type:', mimeType, 'state:', mediaRecorder.state);
@@ -224,10 +220,41 @@ export function VoiceInput({ onTranscript, disabled }) {
           throw new Error(`MediaRecorder failed to start. State: ${mediaRecorder.state}`);
         }
         
+        // Set up audio level monitoring AFTER MediaRecorder starts
+        // Use the original stream (not cloned) for AudioContext to avoid conflicts
+        let audioContext = null;
+        let checkAudioLevel = () => 0;
+        
+        try {
+          audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          const analyser = audioContext.createAnalyser();
+          // Use original stream for monitoring (cloned stream is for MediaRecorder)
+          const microphone = audioContext.createMediaStreamSource(stream);
+          microphone.connect(analyser);
+          analyser.fftSize = 256;
+          const dataArray = new Uint8Array(analyser.frequencyBinCount);
+          
+          checkAudioLevel = () => {
+            analyser.getByteFrequencyData(dataArray);
+            const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
+            return average;
+          };
+        } catch (audioContextError) {
+          console.warn('Could not create AudioContext for monitoring:', audioContextError);
+          // Continue without audio level monitoring
+        }
+        
         // Double-check after a moment
         setTimeout(() => {
           if (mediaRecorder.state !== 'recording') {
             console.error('❌ MediaRecorder stopped immediately after starting! State:', mediaRecorder.state);
+            console.error('Stream active:', stream.active);
+            console.error('Tracks:', stream.getTracks().map(t => ({
+              label: t.label,
+              enabled: t.enabled,
+              readyState: t.readyState,
+              muted: t.muted
+            })));
           } else {
             console.log('✅ MediaRecorder still recording after 100ms');
           }
@@ -273,12 +300,14 @@ export function VoiceInput({ onTranscript, disabled }) {
           } else {
             console.warn('⚠️ Recording state changed to:', mediaRecorder.state);
             clearInterval(recordingCheck);
-            try {
-              if (audioContext.state !== 'closed') {
-                audioContext.close();
+            if (audioContext) {
+              try {
+                if (audioContext.state !== 'closed') {
+                  audioContext.close();
+                }
+              } catch (e) {
+                // Ignore if already closed
               }
-            } catch (e) {
-              // Ignore if already closed
             }
           }
         }, 1000);
@@ -294,7 +323,13 @@ export function VoiceInput({ onTranscript, disabled }) {
         toast.success('Recording... Speak clearly for at least 2-3 seconds, then click Stop.');
       } catch (startError) {
         console.error('❌ Error starting MediaRecorder:', startError);
-        audioContext.close();
+        if (audioContext) {
+          try {
+            audioContext.close();
+          } catch (e) {
+            // Ignore
+          }
+        }
         throw startError;
       }
     } catch (error) {
