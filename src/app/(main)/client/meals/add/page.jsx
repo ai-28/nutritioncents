@@ -279,14 +279,14 @@ function AddMealPageInner() {
             <div>
               <label className="text-sm font-medium mb-2 block">Voice Input</label>
               <VoiceInput onTranscript={handleVoiceTranscript} disabled={extracting} />
-              {inputText && (
-                <div className="mt-2">
-                  <Textarea
-                    value={inputText}
-                    onChange={(e) => setInputText(e.target.value)}
-                    className="min-h-[80px]"
-                    placeholder="Transcript will appear here..."
-                  />
+              <div className="mt-2">
+                <Textarea
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  className="min-h-[100px]"
+                  placeholder="Click 'Start Voice Input' to record your meal description. The transcript will appear here..."
+                />
+                {inputText && (
                   <Button
                     onClick={() => handleExtract()}
                     disabled={!inputText.trim() || extracting}
@@ -301,8 +301,8 @@ function AddMealPageInner() {
                       'Extract Nutrition'
                     )}
                   </Button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           )}
 
