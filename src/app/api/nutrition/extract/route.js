@@ -88,7 +88,7 @@ async function extractWithOpenAI(text) {
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4-turbo-preview",
+      model: "gpt-4o",
       messages: [{
         role: "user",
         content: `Extract nutrition information from this meal description: "${text}". 
