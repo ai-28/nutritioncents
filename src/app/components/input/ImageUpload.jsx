@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useRef } from 'react';
-import { Image as ImageIcon, X, Upload, Loader2 } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { Image as ImageIcon, X, Upload, Loader2, Camera } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 // Compress image to target size (in bytes)
 async function compressImage(file, targetSizeBytes) {
@@ -112,10 +113,25 @@ async function compressImage(file, targetSizeBytes) {
 export function ImageUpload({ onImageUpload, disabled, analyzing }) {
   const [preview, setPreview] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [showCamera, setShowCamera] = useState(false);
+  const [cameraStream, setCameraStream] = useState(null);
   const fileInputRef = useRef(null);
+  const cameraInputRef = useRef(null);
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
 
-  const handleFileSelect = async (e) => {
-    const file = e.target.files?.[0];
+  const handleRemove = () => {
+    setPreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    if (cameraInputRef.current) {
+      cameraInputRef.current.value = '';
+    }
+  };
+
+  // Process captured image (from camera or file)
+  const processImage = async (file) => {
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
@@ -153,19 +169,120 @@ export function ImageUpload({ onImageUpload, disabled, analyzing }) {
         await onImageUpload(compressedBase64);
       }
     } catch (error) {
-      console.error('Image upload error:', error);
+      console.error('Image processing error:', error);
       toast.error('Failed to process image: ' + (error.message || 'Unknown error'));
     } finally {
       setUploading(false);
     }
   };
 
-  const handleRemove = () => {
-    setPreview(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+  const handleFileSelect = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await processImage(file);
+  };
+
+  const handleCameraFileSelect = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setShowCamera(false);
+    await processImage(file);
+  };
+
+  // Check if mobile device
+  const isMobile = () => {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  };
+
+  // Start camera (web or native)
+  const startCamera = async () => {
+    // On mobile, use native camera input (better UX)
+    if (isMobile()) {
+      cameraInputRef.current?.click();
+      return;
+    }
+
+    // On desktop, use web camera
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { 
+          facingMode: 'environment', // Prefer back camera on mobile
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+        } 
+      });
+      setCameraStream(stream);
+      setShowCamera(true);
+      
+      // Wait for video element to be ready
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+      }, 100);
+    } catch (error) {
+      console.error('Camera error:', error);
+      if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+        toast.error('Camera permission denied. Please allow camera access.');
+      } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+        toast.error('No camera found. Please use file upload instead.');
+      } else {
+        toast.error('Failed to access camera: ' + error.message);
+      }
     }
   };
+
+  const stopCamera = () => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+      setCameraStream(null);
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setShowCamera(false);
+  };
+
+  const capturePhoto = () => {
+    if (!videoRef.current || !canvasRef.current) return;
+
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    
+    // Set canvas dimensions to match video
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    
+    // Draw video frame to canvas
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0);
+    
+    // Convert canvas to blob
+    canvas.toBlob(async (blob) => {
+      if (!blob) {
+        toast.error('Failed to capture photo');
+        return;
+      }
+      
+      // Stop camera
+      stopCamera();
+      
+      // Create a File object from blob
+      const file = new File([blob], 'camera-photo.jpg', { type: 'image/jpeg' });
+      
+      // Process the captured image
+      await processImage(file);
+    }, 'image/jpeg', 0.95);
+  };
+
+  // Cleanup camera on unmount
+  useEffect(() => {
+    return () => {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [cameraStream]);
 
   return (
     <div className="space-y-2">
@@ -178,23 +295,52 @@ export function ImageUpload({ onImageUpload, disabled, analyzing }) {
         disabled={disabled || uploading}
       />
       
+      {/* Mobile native camera input */}
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={handleCameraFileSelect}
+        className="hidden"
+        disabled={disabled || uploading}
+      />
+      
+      {/* Hidden canvas for capturing video frames */}
+      <canvas ref={canvasRef} className="hidden" />
+      
       {!preview ? (
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={disabled || uploading}
-          className="w-full"
-        >
-          {uploading ? (
-            'Processing...'
-          ) : (
-            <>
-              <Upload className="w-4 h-4 mr-2" />
-              Upload Food Photo
-            </>
-          )}
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={disabled || uploading}
+            className="flex-1"
+          >
+            {uploading ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              <>
+                <Upload className="w-4 h-4 mr-2" />
+                Upload Photo
+              </>
+            )}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={startCamera}
+            disabled={disabled || uploading}
+            className="flex-1"
+          >
+            <Camera className="w-4 h-4 mr-2" />
+            Take Photo
+          </Button>
+        </div>
       ) : (
         <div className="relative">
           <img
@@ -221,6 +367,43 @@ export function ImageUpload({ onImageUpload, disabled, analyzing }) {
           </Button>
         </div>
       )}
+
+      {/* Camera Dialog */}
+      <Dialog open={showCamera} onOpenChange={(open) => !open && stopCamera()}>
+        <DialogContent className="sm:max-w-[90vw] p-0">
+          <DialogHeader className="p-4 pb-2">
+            <DialogTitle>Take Food Photo</DialogTitle>
+          </DialogHeader>
+          <div className="relative bg-black">
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              className="w-full max-h-[70vh] object-contain"
+            />
+            {cameraStream && (
+              <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-4 p-4">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={stopCamera}
+                  className="rounded-full"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  onClick={capturePhoto}
+                  className="rounded-full w-16 h-16 bg-white hover:bg-white/90"
+                >
+                  <div className="w-12 h-12 rounded-full border-4 border-gray-800"></div>
+                </Button>
+                <div className="w-16"></div> {/* Spacer for centering */}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
