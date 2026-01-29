@@ -189,21 +189,20 @@ export function ImageUpload({ onImageUpload, disabled, analyzing }) {
     await processImage(file);
   };
 
-  // Check if mobile device
-  const isMobile = () => {
-    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-  };
-
-  // Start camera (web or native)
+  // Start camera with live preview
   const startCamera = async () => {
-    // On mobile, use native camera input (better UX)
-    if (isMobile()) {
-      cameraInputRef.current?.click();
-      return;
-    }
-
-    // On desktop, use web camera
+    // Open dialog first to show loading state
+    setShowCamera(true);
+    
+    // Always try web camera first for live preview
     try {
+      console.log('Requesting camera access...');
+      
+      // Check if getUserMedia is available
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Camera API not supported in this browser');
+      }
+      
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: { 
           facingMode: 'environment', // Prefer back camera on mobile
@@ -211,23 +210,30 @@ export function ImageUpload({ onImageUpload, disabled, analyzing }) {
           height: { ideal: 1080 }
         } 
       });
-      setCameraStream(stream);
-      setShowCamera(true);
       
-      // Wait for video element to be ready
-      setTimeout(() => {
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-        }
-      }, 100);
+      console.log('Camera stream obtained:', stream);
+      setCameraStream(stream);
+      
+      // Video stream will be set up in useEffect when both showCamera and cameraStream are ready
     } catch (error) {
-      console.error('Camera error:', error);
+      console.error('Web camera error:', error);
+      setShowCamera(false); // Close dialog if camera fails
+      
+      // Fallback to native camera input if web camera fails
       if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
-        toast.error('Camera permission denied. Please allow camera access.');
+        toast.warning('Camera permission denied. Using native camera...');
+        // Try native camera as fallback
+        setTimeout(() => {
+          cameraInputRef.current?.click();
+        }, 500);
       } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
-        toast.error('No camera found. Please use file upload instead.');
+        toast.warning('No camera found. Using native camera input...');
+        // Try native camera as fallback
+        cameraInputRef.current?.click();
       } else {
-        toast.error('Failed to access camera: ' + error.message);
+        toast.warning('Web camera unavailable. Using native camera...');
+        // Try native camera as fallback
+        cameraInputRef.current?.click();
       }
     }
   };
@@ -274,6 +280,17 @@ export function ImageUpload({ onImageUpload, disabled, analyzing }) {
       await processImage(file);
     }, 'image/jpeg', 0.95);
   };
+
+  // Handle video stream when camera is ready
+  useEffect(() => {
+    if (showCamera && cameraStream && videoRef.current) {
+      console.log('Setting up video stream in useEffect');
+      videoRef.current.srcObject = cameraStream;
+      videoRef.current.play().catch(err => {
+        console.error('Error playing video:', err);
+      });
+    }
+  }, [showCamera, cameraStream]);
 
   // Cleanup camera on unmount
   useEffect(() => {
@@ -368,19 +385,29 @@ export function ImageUpload({ onImageUpload, disabled, analyzing }) {
         </div>
       )}
 
-      {/* Camera Dialog */}
+      {/* Camera Dialog with Live Preview */}
       <Dialog open={showCamera} onOpenChange={(open) => !open && stopCamera()}>
-        <DialogContent className="sm:max-w-[90vw] p-0">
+        <DialogContent className="sm:max-w-[95vw] max-w-[95vw] p-0 gap-0">
           <DialogHeader className="p-4 pb-2">
             <DialogTitle>Take Food Photo</DialogTitle>
           </DialogHeader>
-          <div className="relative bg-black">
+          <div className="relative bg-black flex items-center justify-center min-h-[400px]">
             <video
               ref={videoRef}
               autoPlay
               playsInline
+              muted
               className="w-full max-h-[70vh] object-contain"
+              style={{ transform: 'scaleX(-1)' }} // Mirror the video for better UX
             />
+            {!cameraStream && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="text-white text-center">
+                  <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2" />
+                  <p>Starting camera...</p>
+                </div>
+              </div>
+            )}
             {cameraStream && (
               <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-4 p-4">
                 <Button
@@ -394,7 +421,7 @@ export function ImageUpload({ onImageUpload, disabled, analyzing }) {
                 <Button
                   type="button"
                   onClick={capturePhoto}
-                  className="rounded-full w-16 h-16 bg-white hover:bg-white/90"
+                  className="rounded-full w-16 h-16 bg-white hover:bg-white/90 shadow-lg"
                 >
                   <div className="w-12 h-12 rounded-full border-4 border-gray-800"></div>
                 </Button>
