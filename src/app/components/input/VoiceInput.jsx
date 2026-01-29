@@ -138,25 +138,59 @@ export function VoiceInput({ onTranscript, disabled }) {
           streamRef.current = null;
         }
 
-        // Transcribe audio (will handle empty chunks error)
-        await transcribeAudio();
+        // Only transcribe if we have actual audio data
+        if (audioChunksRef.current.length > 0 && totalSize > 0) {
+          console.log('✅ Have audio data, proceeding to transcribe');
+          await transcribeAudio();
+        } else {
+          console.warn('⚠️ MediaRecorder stopped but no audio data collected');
+          console.warn('⚠️ Chunks:', audioChunksRef.current.length, 'Total size:', totalSize);
+          
+          // Check if this was a manual stop (user clicked stop button)
+          // If isRecording is false, the user manually stopped, so don't show error here
+          // The stopRecording function already handles the error message
+          if (!isRecording) {
+            console.log('User manually stopped, error already handled in stopRecording');
+            return;
+          }
+          
+          // If isRecording is still true, the recorder stopped unexpectedly
+          console.error('❌ MediaRecorder stopped unexpectedly!');
+          toast.error('Recording stopped unexpectedly. Please try again.');
+          setIsRecording(false);
+        }
       };
 
       mediaRecorder.onerror = (event) => {
         console.error('MediaRecorder error:', event);
-        toast.error('Recording error occurred. Please try again.');
+        console.error('Error details:', {
+          error: event.error,
+          name: event.error?.name,
+          message: event.error?.message
+        });
+        toast.error(`Recording error: ${event.error?.message || 'Unknown error'}. Please try again.`);
         setIsRecording(false);
+        
+        // Clean up on error
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach(track => track.stop());
+          streamRef.current = null;
+        }
+        if (mediaRecorderRef.current?._audioContext) {
+          try {
+            mediaRecorderRef.current._audioContext.close();
+          } catch (e) {
+            // Ignore
+          }
+        }
       };
 
       // Check MediaRecorder state before starting
+      // Don't stop a new MediaRecorder - it should always be inactive when created
       if (mediaRecorder.state !== 'inactive') {
-        console.warn('MediaRecorder not in inactive state:', mediaRecorder.state);
-        try {
-          mediaRecorder.stop();
-          await new Promise(resolve => setTimeout(resolve, 200));
-        } catch (e) {
-          console.warn('Error stopping MediaRecorder:', e);
-        }
+        console.error('⚠️ MediaRecorder not in inactive state when created! State:', mediaRecorder.state);
+        // This shouldn't happen, but if it does, we can't use this recorder
+        throw new Error(`MediaRecorder in unexpected state: ${mediaRecorder.state}`);
       }
       
       // Set up audio level monitoring to verify audio is being captured
@@ -178,13 +212,26 @@ export function VoiceInput({ onTranscript, disabled }) {
       // Using 500ms timeslice - this triggers ondataavailable every 500ms
       // This ensures we get data even if the recording is short
       try {
+        console.log('🚀 About to start MediaRecorder, current state:', mediaRecorder.state);
+        console.log('🚀 Stream active:', stream.active, 'tracks:', stream.getTracks().length);
+        
         mediaRecorder.start(500);
         console.log('✅ Recording started, MIME type:', mimeType, 'state:', mediaRecorder.state);
         
         // Verify recording actually started
         if (mediaRecorder.state !== 'recording') {
+          console.error('❌ MediaRecorder failed to start! State:', mediaRecorder.state);
           throw new Error(`MediaRecorder failed to start. State: ${mediaRecorder.state}`);
         }
+        
+        // Double-check after a moment
+        setTimeout(() => {
+          if (mediaRecorder.state !== 'recording') {
+            console.error('❌ MediaRecorder stopped immediately after starting! State:', mediaRecorder.state);
+          } else {
+            console.log('✅ MediaRecorder still recording after 100ms');
+          }
+        }, 100);
         
         setIsRecording(true);
         setTranscript('');
