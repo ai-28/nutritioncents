@@ -53,6 +53,26 @@ export function VoiceInput({ onTranscript, disabled }) {
         }
       });
       
+      // Verify stream is actually active
+      const audioTracks = stream.getAudioTracks();
+      if (audioTracks.length === 0) {
+        throw new Error('No audio tracks available in stream');
+      }
+      
+      // Check if tracks are enabled and active
+      const activeTrack = audioTracks.find(track => track.readyState === 'live' && track.enabled);
+      if (!activeTrack) {
+        throw new Error('No active audio track found');
+      }
+      
+      console.log('Stream verified:', {
+        tracks: audioTracks.length,
+        activeTrack: activeTrack.label,
+        enabled: activeTrack.enabled,
+        readyState: activeTrack.readyState,
+        muted: activeTrack.muted
+      });
+      
       streamRef.current = stream;
       audioChunksRef.current = [];
       
@@ -65,6 +85,8 @@ export function VoiceInput({ onTranscript, disabled }) {
         }
       }
       
+      console.log('Using MIME type:', mimeType, 'supported:', MediaRecorder.isTypeSupported(mimeType));
+      
       // Create MediaRecorder
       const mediaRecorder = new MediaRecorder(stream, {
         mimeType: mimeType
@@ -73,12 +95,17 @@ export function VoiceInput({ onTranscript, disabled }) {
       mediaRecorderRef.current = mediaRecorder;
 
       mediaRecorder.ondataavailable = (event) => {
-        console.log('ondataavailable fired, data size:', event.data?.size || 0);
-        if (event.data && event.data.size > 0) {
-          console.log('Audio chunk received:', event.data.size, 'bytes');
-          audioChunksRef.current.push(event.data);
+        console.log('ondataavailable fired, data size:', event.data?.size || 0, 'type:', event.data?.type);
+        if (event.data) {
+          if (event.data.size > 0) {
+            console.log('✅ Audio chunk received:', event.data.size, 'bytes');
+            audioChunksRef.current.push(event.data);
+            console.log('Total chunks now:', audioChunksRef.current.length);
+          } else {
+            console.warn('⚠️ ondataavailable fired but data size is 0');
+          }
         } else {
-          console.warn('ondataavailable fired but data is empty or null');
+          console.error('❌ ondataavailable fired but event.data is null/undefined');
         }
       };
 
@@ -136,24 +163,60 @@ export function VoiceInput({ onTranscript, disabled }) {
         }
       }
       
-      // Verify stream is active
-      const audioTracks = stream.getAudioTracks();
-      console.log('Audio tracks:', audioTracks.length);
-      if (audioTracks.length === 0) {
-        throw new Error('No audio tracks available');
+      // Start recording with a small timeslice to ensure data collection
+      // Using 250ms timeslice ensures we get data even for short recordings
+      // This will trigger ondataavailable every 250ms
+      try {
+        mediaRecorder.start(250);
+        console.log('✅ Recording started, MIME type:', mimeType, 'state:', mediaRecorder.state);
+        
+        // Verify recording actually started
+        if (mediaRecorder.state !== 'recording') {
+          throw new Error(`MediaRecorder failed to start. State: ${mediaRecorder.state}`);
+        }
+        
+        setIsRecording(true);
+        setTranscript('');
+        
+        // Set up a periodic check to verify we're actually recording and collecting data
+        const recordingCheck = setInterval(() => {
+          if (mediaRecorder.state === 'recording') {
+            const totalSize = audioChunksRef.current.reduce((sum, chunk) => sum + (chunk.size || 0), 0);
+            console.log('📊 Recording active, chunks:', audioChunksRef.current.length, 'total size:', totalSize, 'bytes');
+            
+            // If no chunks after 1 second, manually request data
+            if (audioChunksRef.current.length === 0 && totalSize === 0) {
+              console.warn('⚠️ No chunks collected yet, manually requesting data...');
+              try {
+                mediaRecorder.requestData();
+              } catch (e) {
+                console.warn('Could not manually request data:', e);
+              }
+            }
+            
+            // Check if stream is still active
+            if (streamRef.current) {
+              const tracks = streamRef.current.getAudioTracks();
+              tracks.forEach(track => {
+                if (track.readyState !== 'live') {
+                  console.warn('⚠️ Track not live:', track.label, 'state:', track.readyState);
+                }
+              });
+            }
+          } else {
+            console.warn('⚠️ Recording state changed to:', mediaRecorder.state);
+            clearInterval(recordingCheck);
+          }
+        }, 1000);
+        
+        // Store interval ID for cleanup
+        mediaRecorder._checkInterval = recordingCheck;
+        
+        toast.success('Recording... Speak your meal description. Click Stop when finished.');
+      } catch (startError) {
+        console.error('❌ Error starting MediaRecorder:', startError);
+        throw startError;
       }
-      audioTracks.forEach(track => {
-        console.log('Audio track:', track.label, 'enabled:', track.enabled, 'readyState:', track.readyState);
-      });
-      
-      // Start recording
-      // Don't use timeslice - collect all data when stopping
-      // This ensures we get all audio data
-      mediaRecorder.start();
-      setIsRecording(true);
-      setTranscript('');
-      console.log('Recording started, MIME type:', mimeType, 'state:', mediaRecorder.state);
-      toast.success('Recording... Speak your meal description. Click Stop when finished.');
     } catch (error) {
       console.error('Error starting recording:', error);
       toast.error('Failed to start recording. Please try again.');
@@ -167,11 +230,20 @@ export function VoiceInput({ onTranscript, disabled }) {
         console.log('Stopping recording, current state:', mediaRecorderRef.current.state);
         console.log('Chunks collected so far:', audioChunksRef.current.length);
         
+        // Clear the recording check interval
+        if (mediaRecorderRef.current._checkInterval) {
+          clearInterval(mediaRecorderRef.current._checkInterval);
+        }
+        
         // Request any pending data before stopping
         if (mediaRecorderRef.current.state === 'recording') {
           try {
             mediaRecorderRef.current.requestData();
             console.log('Requested data before stopping');
+            // Wait a moment for the data to arrive
+            setTimeout(() => {
+              console.log('Chunks after requestData:', audioChunksRef.current.length);
+            }, 100);
           } catch (e) {
             console.warn('Could not request data before stopping:', e);
           }
@@ -180,6 +252,14 @@ export function VoiceInput({ onTranscript, disabled }) {
         // Stop the recorder
         mediaRecorderRef.current.stop();
         setIsRecording(false);
+        
+        // Check if we have any chunks
+        if (audioChunksRef.current.length === 0) {
+          console.error('No audio chunks collected!');
+          toast.error('No audio was recorded. Please check your microphone and try again.');
+          return;
+        }
+        
         toast.success('Processing your speech...');
       } catch (error) {
         console.error('Error stopping recording:', error);
@@ -192,9 +272,15 @@ export function VoiceInput({ onTranscript, disabled }) {
   const transcribeAudio = async () => {
     console.log('Transcribing audio, chunks:', audioChunksRef.current.length);
     
-    if (audioChunksRef.current.length === 0) {
-      console.error('No audio chunks available');
-      toast.error('No audio recorded. Please try again.');
+    // Calculate total size of all chunks
+    const totalSize = audioChunksRef.current.reduce((sum, chunk) => sum + (chunk.size || 0), 0);
+    console.log('Total audio data size:', totalSize, 'bytes');
+    
+    if (audioChunksRef.current.length === 0 || totalSize === 0) {
+      console.error('No audio chunks available or all chunks are empty');
+      toast.error('No audio recorded. Please check your microphone and try again.');
+      setIsTranscribing(false);
+      audioChunksRef.current = [];
       return;
     }
 
