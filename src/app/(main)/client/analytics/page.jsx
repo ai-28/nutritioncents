@@ -184,13 +184,14 @@ export default function AnalyticsPage() {
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis 
-                    dataKey="dow" 
+                    dataKey="date" 
                     tickLine={false} 
                     axisLine={false}
-                    // Use index as key to ensure correct mapping
+                    // Use date as key (unique) but display day abbreviation
                     tickFormatter={(value, index) => {
-                      // Return the day abbreviation
-                      return value;
+                      // Get the day abbreviation from the data point
+                      const dataPoint = weekSeries[index];
+                      return dataPoint?.dow || '';
                     }}
                   />
                   <YAxis tickLine={false} axisLine={false} width={32} />
