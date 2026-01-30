@@ -53,8 +53,15 @@ export default function AnalyticsPage() {
     const weekStartDate = startOfWeek(today, { weekStartsOn: 0 });
     const map = new Map();
     (weeklyData?.days || []).forEach((d) => {
-      const dateKey = String(d.summary_date).slice(0, 10);
-      map.set(dateKey, d);
+      // Handle both date objects and strings
+      const dateKey = d.summary_date 
+        ? (typeof d.summary_date === 'string' 
+            ? d.summary_date.slice(0, 10) 
+            : new Date(d.summary_date).toISOString().slice(0, 10))
+        : null;
+      if (dateKey) {
+        map.set(dateKey, d);
+      }
     });
 
     const series = Array.from({ length: 7 }).map((_, idx) => {
@@ -68,23 +75,9 @@ export default function AnalyticsPage() {
       const carbs = Math.round(parseFloat(row?.total_carbs || 0));
       const fats = Math.round(parseFloat(row?.total_fats || 0));
       
-      // Debug: log if we have data but values are 0
-      if (row && calories > 0) {
-        console.log(`Day ${key} data:`, {
-          row,
-          calories,
-          protein,
-          carbs,
-          fats,
-          total_calories: row.total_calories,
-          total_protein: row.total_protein,
-          total_carbs: row.total_carbs,
-          total_fats: row.total_fats,
-        });
-      }
-      
       return {
-        key,
+        key, // Keep the date key for debugging
+        date: key, // Also include as 'date' for tooltip
         dow: format(date, 'EEEEE'), // S M T W T F S
         calories,
         protein,
@@ -93,7 +86,6 @@ export default function AnalyticsPage() {
       };
     });
     
-    console.log('Week series generated:', series);
     return series;
   }, [weeklyData]);
 
@@ -191,9 +183,22 @@ export default function AnalyticsPage() {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="dow" tickLine={false} axisLine={false} />
+                  <XAxis 
+                    dataKey="dow" 
+                    tickLine={false} 
+                    axisLine={false}
+                    // Use index as key to ensure correct mapping
+                    tickFormatter={(value, index) => {
+                      // Return the day abbreviation
+                      return value;
+                    }}
+                  />
                   <YAxis tickLine={false} axisLine={false} width={32} />
-                  <Tooltip content={<MacroTooltip />} />
+                  <Tooltip 
+                    content={<MacroTooltip />}
+                    // Ensure tooltip uses the correct data point
+                    cursor={{ stroke: 'hsl(var(--primary))', strokeWidth: 1 }}
+                  />
                   <Area
                     type="monotone"
                     dataKey="calories"
@@ -229,9 +234,10 @@ function MacroTooltip({ active, payload, label }) {
   const protein = Number(data.protein) || 0;
   const carbs = Number(data.carbs) || 0;
   const fats = Number(data.fats) || 0;
+  const date = data.date || data.key || label; // Get the date to verify which day we're showing
 
-  // Debug log to verify we're reading correctly
-  console.log('Tooltip data:', { data, calories, protein, carbs, fats });
+  // Debug: verify we're showing the correct day
+  console.log('Tooltip - Date:', date, 'Label:', label, 'Data:', { calories, protein, carbs, fats });
 
   return (
     <div className="rounded-xl bg-orange-500 text-white px-3 py-2 shadow-md">
