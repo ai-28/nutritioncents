@@ -80,21 +80,48 @@ export function VoiceInput({ onTranscript, disabled }) {
       streamRef.current = stream; // Keep original for cleanup
       audioChunksRef.current = [];
       
-      // Determine best MIME type for browser
-      let mimeType = 'audio/webm;codecs=opus';
-      if (!MediaRecorder.isTypeSupported(mimeType)) {
-        mimeType = 'audio/webm';
-        if (!MediaRecorder.isTypeSupported(mimeType)) {
+      // Determine best MIME type for browser (Safari-compatible first)
+      let mimeType = null;
+      
+      // Check for Safari first (Safari prefers mp4/aac)
+      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      
+      if (isSafari || isIOS) {
+        // Safari/iOS prefers these formats
+        if (MediaRecorder.isTypeSupported('audio/mp4')) {
           mimeType = 'audio/mp4';
+        } else if (MediaRecorder.isTypeSupported('audio/aac')) {
+          mimeType = 'audio/aac';
+        } else if (MediaRecorder.isTypeSupported('audio/mpeg')) {
+          mimeType = 'audio/mpeg';
         }
       }
       
-      console.log('Using MIME type:', mimeType, 'supported:', MediaRecorder.isTypeSupported(mimeType));
+      // Fallback to webm for other browsers
+      if (!mimeType) {
+        if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+          mimeType = 'audio/webm;codecs=opus';
+        } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+          mimeType = 'audio/webm';
+        } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+          mimeType = 'audio/mp4';
+        } else if (MediaRecorder.isTypeSupported('audio/aac')) {
+          mimeType = 'audio/aac';
+        }
+      }
+      
+      // If still no type found, let MediaRecorder use default
+      if (!mimeType) {
+        console.warn('No supported MIME type found, using MediaRecorder default');
+      }
+      
+      console.log('Using MIME type:', mimeType, 'supported:', mimeType ? MediaRecorder.isTypeSupported(mimeType) : 'default');
       
       // Create MediaRecorder with cloned stream
-      const mediaRecorder = new MediaRecorder(clonedStream, {
-        mimeType: mimeType
-      });
+      const mediaRecorder = mimeType 
+        ? new MediaRecorder(clonedStream, { mimeType: mimeType })
+        : new MediaRecorder(clonedStream);
       
       mediaRecorderRef.current = mediaRecorder;
 
@@ -481,9 +508,16 @@ export function VoiceInput({ onTranscript, disabled }) {
         return;
       }
       
-      // Create FormData
+      // Create FormData with Safari-compatible file extension
       const formData = new FormData();
-      const fileName = mimeType.includes('webm') ? 'recording.webm' : 'recording.mp4';
+      let fileName = 'recording.webm';
+      if (mimeType.includes('mp4') || mimeType.includes('aac') || mimeType.includes('mpeg')) {
+        fileName = 'recording.m4a';
+      } else if (mimeType.includes('webm')) {
+        fileName = 'recording.webm';
+      } else if (mimeType.includes('ogg')) {
+        fileName = 'recording.ogg';
+      }
       formData.append('audio', audioBlob, fileName);
       
       console.log('Sending audio to transcription API...');
@@ -550,14 +584,44 @@ export function VoiceInput({ onTranscript, disabled }) {
     };
   }, [isRecording]);
 
-  // Check browser support
-  if (typeof window === 'undefined' || !window.MediaRecorder) {
+  // Check browser support with Safari-specific handling
+  if (typeof window === 'undefined') {
     return (
       <Button variant="outline" disabled>
         <MicOff className="w-4 h-4 mr-2" />
         Voice not supported
       </Button>
     );
+  }
+
+  // Check MediaRecorder support
+  if (!window.MediaRecorder) {
+    return (
+      <Button variant="outline" disabled>
+        <MicOff className="w-4 h-4 mr-2" />
+        Voice not supported
+      </Button>
+    );
+  }
+
+  // Safari-specific: Check if any audio format is supported
+  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  
+  if (isSafari || isIOS) {
+    const safariSupported = 
+      MediaRecorder.isTypeSupported('audio/mp4') ||
+      MediaRecorder.isTypeSupported('audio/aac') ||
+      MediaRecorder.isTypeSupported('audio/mpeg');
+    
+    if (!safariSupported) {
+      return (
+        <Button variant="outline" disabled>
+          <MicOff className="w-4 h-4 mr-2" />
+          Voice recording not supported in Safari
+        </Button>
+      );
+    }
   }
 
   return (
