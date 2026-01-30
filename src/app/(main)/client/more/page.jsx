@@ -33,7 +33,7 @@ export default function MorePage() {
     },
     {
       icon: TrendingUp,
-      label: 'Analytics',
+      label: 'Progress',
       description: 'Weekly and monthly nutrition trends',
       href: '/client/analytics',
       color: 'text-purple-500',
