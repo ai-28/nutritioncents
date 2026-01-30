@@ -33,6 +33,11 @@ export default function AnalyticsPage() {
 
       if (weeklyRes.ok) {
         const data = await weeklyRes.json();
+        console.log('Weekly analytics API response:', data);
+        console.log('Days data:', data.days);
+        if (data.days && data.days.length > 0) {
+          console.log('First day sample:', data.days[0]);
+        }
         setWeeklyData(data);
       }
       if (trendsRes.ok) {
@@ -55,7 +60,7 @@ export default function AnalyticsPage() {
       map.set(dateKey, d);
     });
 
-    return Array.from({ length: 7 }).map((_, idx) => {
+    const series = Array.from({ length: 7 }).map((_, idx) => {
       const date = addDays(weekStartDate, idx);
       const key = format(date, 'yyyy-MM-dd');
       const row = map.get(key);
@@ -66,6 +71,21 @@ export default function AnalyticsPage() {
       const carbs = Math.round(parseFloat(row?.total_carbs || 0));
       const fats = Math.round(parseFloat(row?.total_fats || 0));
       
+      // Debug: log if we have data but values are 0
+      if (row && calories > 0) {
+        console.log(`Day ${key} data:`, {
+          row,
+          calories,
+          protein,
+          carbs,
+          fats,
+          total_calories: row.total_calories,
+          total_protein: row.total_protein,
+          total_carbs: row.total_carbs,
+          total_fats: row.total_fats,
+        });
+      }
+      
       return {
         key,
         dow: format(date, 'EEEEE'), // S M T W T F S
@@ -75,6 +95,9 @@ export default function AnalyticsPage() {
         fats,
       };
     });
+    
+    console.log('Week series generated:', series);
+    return series;
   }, [weeklyData]);
 
   const loggedDaysSet = useMemo(() => {
@@ -192,17 +215,31 @@ export default function AnalyticsPage() {
   );
 }
 
-function MacroTooltip({ active, payload }) {
+function MacroTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
-  const p = payload[0]?.payload;
-  if (!p) return null;
+  
+  // Recharts passes data in payload[0].payload
+  // Also check payload[0] directly in case structure is different
+  const data = payload[0]?.payload || payload[0];
+  if (!data) return null;
+
+  // Extract values - handle both number and string types
+  const calories = typeof data.calories === 'number' ? data.calories : parseFloat(data.calories || 0);
+  const protein = typeof data.protein === 'number' ? data.protein : parseFloat(data.protein || 0);
+  const carbs = typeof data.carbs === 'number' ? data.carbs : parseFloat(data.carbs || 0);
+  const fats = typeof data.fats === 'number' ? data.fats : parseFloat(data.fats || 0);
+
+  // Debug: log the payload structure to see what we're getting
+  if (calories > 0 && (protein === 0 && carbs === 0 && fats === 0)) {
+    console.log('Tooltip debug - payload structure:', { payload, data, calories, protein, carbs, fats });
+  }
 
   return (
     <div className="rounded-xl bg-orange-500 text-white px-3 py-2 shadow-md">
-      <div className="text-sm font-semibold">{p.calories} cal</div>
-      <div className="text-xs opacity-95 mt-1">Fat&nbsp;&nbsp;&nbsp;{p.fats}g</div>
-      <div className="text-xs opacity-95">Carbs {p.carbs}g</div>
-      <div className="text-xs opacity-95">Protein {p.protein}g</div>
+      <div className="text-sm font-semibold">{Math.round(calories)} cal</div>
+      <div className="text-xs opacity-95 mt-1">Fat&nbsp;&nbsp;&nbsp;{Math.round(fats)}g</div>
+      <div className="text-xs opacity-95">Carbs {Math.round(carbs)}g</div>
+      <div className="text-xs opacity-95">Protein {Math.round(protein)}g</div>
     </div>
   );
 }
