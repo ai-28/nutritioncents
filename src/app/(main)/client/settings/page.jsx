@@ -9,11 +9,12 @@ import { useAuth } from '@/lib/auth-context';
 import { toast } from 'sonner';
 import { 
   Settings, Bell, Shield, Moon, 
-  Trash2, LogOut, Save 
+  Trash2, LogOut, Save, Mic, FileText, Image, Barcode
 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function SettingsPage() {
   const { user, signOut } = useAuth();
@@ -24,6 +25,7 @@ export default function SettingsPage() {
     notifications: true,
     emailUpdates: true,
     darkMode: false,
+    preferredInputMethod: 'voice',
   });
 
   useEffect(() => {
@@ -37,10 +39,29 @@ export default function SettingsPage() {
   const loadSettings = async () => {
     try {
       setLoading(true);
-      // Load settings from localStorage or API
+      
+      // Load user preferences from API
+      const preferencesRes = await fetch('/api/client/preferences');
+      if (preferencesRes.ok) {
+        const { preferences } = await preferencesRes.json();
+        if (preferences) {
+          setSettings(prev => ({
+            ...prev,
+            preferredInputMethod: preferences.preferred_input_method || 'voice',
+          }));
+        }
+      }
+      
+      // Load UI settings from localStorage (notifications, dark mode)
       const savedSettings = localStorage.getItem(`settings_${user?.id}`);
       if (savedSettings) {
-        setSettings(JSON.parse(savedSettings));
+        const localSettings = JSON.parse(savedSettings);
+        setSettings(prev => ({
+          ...prev,
+          notifications: localSettings.notifications ?? prev.notifications,
+          emailUpdates: localSettings.emailUpdates ?? prev.emailUpdates,
+          darkMode: localSettings.darkMode ?? prev.darkMode,
+        }));
       }
     } catch (error) {
       console.error('Error loading settings:', error);
@@ -52,8 +73,28 @@ export default function SettingsPage() {
   const handleSaveSettings = async () => {
     try {
       setSaving(true);
-      // Save to localStorage (you can extend this to save to API)
-      localStorage.setItem(`settings_${user?.id}`, JSON.stringify(settings));
+      
+      // Save user preferences to API
+      const preferencesRes = await fetch('/api/client/preferences', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          preferredInputMethod: settings.preferredInputMethod,
+        }),
+      });
+
+      if (!preferencesRes.ok) {
+        console.warn('Failed to save preferences to API');
+      }
+      
+      // Save UI settings to localStorage
+      const localSettings = {
+        notifications: settings.notifications,
+        emailUpdates: settings.emailUpdates,
+        darkMode: settings.darkMode,
+      };
+      localStorage.setItem(`settings_${user?.id}`, JSON.stringify(localSettings));
+      
       toast.success('Settings saved successfully');
     } catch (error) {
       toast.error('Failed to save settings');
@@ -126,6 +167,58 @@ export default function SettingsPage() {
                   setSettings(prev => ({ ...prev, emailUpdates: checked }))
                 }
               />
+            </div>
+          </div>
+        </div>
+
+        {/* Input Preferences */}
+        <div className="bg-card rounded-lg border border-border p-4 space-y-4">
+          <h2 className="text-lg font-semibold flex items-center gap-2">
+            <Mic className="w-5 h-5" />
+            Input Preferences
+          </h2>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Preferred Input Method</Label>
+              <Select
+                value={settings.preferredInputMethod}
+                onValueChange={(value) => 
+                  setSettings(prev => ({ ...prev, preferredInputMethod: value }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="voice">
+                    <div className="flex items-center gap-2">
+                      <Mic className="w-4 h-4" />
+                      Voice
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="text">
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-4 h-4" />
+                      Text
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="image">
+                    <div className="flex items-center gap-2">
+                      <Image className="w-4 h-4" />
+                      Photo
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="barcode">
+                    <div className="flex items-center gap-2">
+                      <Barcode className="w-4 h-4" />
+                      Barcode
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-sm text-muted-foreground">
+                Choose your default method for adding meals
+              </p>
             </div>
           </div>
         </div>

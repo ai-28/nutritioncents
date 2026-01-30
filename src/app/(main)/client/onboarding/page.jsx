@@ -54,7 +54,8 @@ export default function OnboardingPage() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/client/profile', {
+      // Save profile
+      const profileResponse = await fetch('/api/client/profile', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -69,9 +70,37 @@ export default function OnboardingPage() {
         }),
       });
 
-      if (!response.ok) {
-        const data = await response.json();
+      if (!profileResponse.ok) {
+        const data = await profileResponse.json();
         throw new Error(data.error || 'Failed to save profile');
+      }
+
+      // Save health goal
+      if (formData.healthGoal) {
+        const goalTypeMap = {
+          'Diary': 'maintenance',
+          'Fitness': 'fitness',
+          'Weight Loss': 'weight_loss',
+          'Muscle Gain': 'muscle_gain',
+        };
+
+        const goalResponse = await fetch('/api/health/goals', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            goalType: goalTypeMap[formData.healthGoal] || 'maintenance',
+            goalName: formData.healthGoal,
+            currentWeightKg: parseFloat(formData.weight) || undefined,
+            priority: 1,
+            notes: 'Set during onboarding',
+          }),
+        });
+
+        if (!goalResponse.ok) {
+          console.warn('Failed to save health goal, but continuing...');
+        }
       }
 
       toast.success('Profile saved!');

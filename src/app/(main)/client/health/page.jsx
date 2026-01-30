@@ -28,9 +28,11 @@ export default function HealthPage() {
   const [loading, setLoading] = useState(true);
   const [allergies, setAllergies] = useState([]);
   const [conditions, setConditions] = useState([]);
+  const [restrictions, setRestrictions] = useState([]);
   const [recommendations, setRecommendations] = useState([]);
   const [showAllergyDialog, setShowAllergyDialog] = useState(false);
   const [showConditionDialog, setShowConditionDialog] = useState(false);
+  const [showRestrictionDialog, setShowRestrictionDialog] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const [allergyForm, setAllergyForm] = useState({
@@ -52,6 +54,13 @@ export default function HealthPage() {
     doctorName: '',
   });
 
+  const [restrictionForm, setRestrictionForm] = useState({
+    restrictionType: 'vegetarian',
+    restrictionName: '',
+    strictness: 'moderate',
+    notes: '',
+  });
+
   useEffect(() => {
     if (user) {
       loadData();
@@ -61,9 +70,10 @@ export default function HealthPage() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [allergiesRes, conditionsRes, recommendationsRes] = await Promise.all([
+      const [allergiesRes, conditionsRes, restrictionsRes, recommendationsRes] = await Promise.all([
         fetch('/api/health/allergies'),
         fetch('/api/health/conditions'),
+        fetch('/api/health/dietary-restrictions'),
         fetch('/api/health/conditions?recommendations=true'),
       ]);
 
@@ -75,6 +85,11 @@ export default function HealthPage() {
       if (conditionsRes.ok) {
         const { conditions: conditionsData } = await conditionsRes.json();
         setConditions(conditionsData || []);
+      }
+
+      if (restrictionsRes.ok) {
+        const { restrictions: restrictionsData } = await restrictionsRes.json();
+        setRestrictions(restrictionsData || []);
       }
 
       if (recommendationsRes.ok) {
@@ -172,6 +187,61 @@ export default function HealthPage() {
       toast.info('Delete functionality coming soon');
     } catch (error) {
       toast.error('Failed to delete allergy');
+    }
+  };
+
+  const handleAddRestriction = async () => {
+    if (!restrictionForm.restrictionType) {
+      toast.error('Please select a restriction type');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const response = await fetch('/api/health/dietary-restrictions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(restrictionForm),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to add dietary restriction');
+      }
+
+      toast.success('Dietary restriction added successfully');
+      setShowRestrictionDialog(false);
+      setRestrictionForm({
+        restrictionType: 'vegetarian',
+        restrictionName: '',
+        strictness: 'moderate',
+        notes: '',
+      });
+      loadData();
+    } catch (error) {
+      toast.error(error.message || 'Failed to add dietary restriction');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteRestriction = async (id) => {
+    if (!confirm('Are you sure you want to remove this dietary restriction?')) return;
+
+    try {
+      const response = await fetch(`/api/health/dietary-restrictions?id=${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to delete restriction');
+      }
+
+      toast.success('Dietary restriction removed');
+      loadData();
+    } catch (error) {
+      toast.error(error.message || 'Failed to delete restriction');
     }
   };
 
@@ -473,6 +543,134 @@ export default function HealthPage() {
                         </p>
                       )}
                     </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Dietary Restrictions Section */}
+        <div className="bg-card rounded-lg border border-border p-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              <Info className="w-5 h-5 text-green-500" />
+              Dietary Restrictions
+            </h2>
+            <Dialog open={showRestrictionDialog} onOpenChange={setShowRestrictionDialog}>
+              <DialogTrigger asChild>
+                <Button size="sm">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Restriction
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Add Dietary Restriction</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Restriction Type *</Label>
+                    <Select
+                      value={restrictionForm.restrictionType}
+                      onValueChange={(value) => setRestrictionForm(prev => ({ ...prev, restrictionType: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="vegetarian">Vegetarian</SelectItem>
+                        <SelectItem value="vegan">Vegan</SelectItem>
+                        <SelectItem value="pescatarian">Pescatarian</SelectItem>
+                        <SelectItem value="keto">Keto</SelectItem>
+                        <SelectItem value="paleo">Paleo</SelectItem>
+                        <SelectItem value="low_carb">Low Carb</SelectItem>
+                        <SelectItem value="low_sodium">Low Sodium</SelectItem>
+                        <SelectItem value="low_sugar">Low Sugar</SelectItem>
+                        <SelectItem value="halal">Halal</SelectItem>
+                        <SelectItem value="kosher">Kosher</SelectItem>
+                        <SelectItem value="gluten_free">Gluten Free</SelectItem>
+                        <SelectItem value="dairy_free">Dairy Free</SelectItem>
+                        <SelectItem value="custom">Custom</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {restrictionForm.restrictionType === 'custom' && (
+                    <div className="space-y-2">
+                      <Label>Restriction Name</Label>
+                      <Input
+                        value={restrictionForm.restrictionName}
+                        onChange={(e) => setRestrictionForm(prev => ({ ...prev, restrictionName: e.target.value }))}
+                        placeholder="Enter custom restriction name"
+                      />
+                    </div>
+                  )}
+                  <div className="space-y-2">
+                    <Label>Strictness</Label>
+                    <Select
+                      value={restrictionForm.strictness}
+                      onValueChange={(value) => setRestrictionForm(prev => ({ ...prev, strictness: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="flexible">Flexible</SelectItem>
+                        <SelectItem value="moderate">Moderate</SelectItem>
+                        <SelectItem value="strict">Strict</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Notes</Label>
+                    <Textarea
+                      value={restrictionForm.notes}
+                      onChange={(e) => setRestrictionForm(prev => ({ ...prev, notes: e.target.value }))}
+                      placeholder="Additional notes about this restriction..."
+                      rows={3}
+                    />
+                  </div>
+                  <Button onClick={handleAddRestriction} disabled={saving} className="w-full">
+                    {saving ? 'Adding...' : 'Add Restriction'}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          {restrictions.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Info className="w-12 h-12 mx-auto mb-2 opacity-50" />
+              <p>No dietary restrictions recorded</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {restrictions.map((restriction) => (
+                <div key={restriction.id} className="border border-border rounded-lg p-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-semibold">
+                          {restriction.restriction_name || restriction.restriction_type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                        </h3>
+                        <span className="text-xs px-2 py-0.5 rounded bg-green-100 text-green-700">
+                          {restriction.strictness}
+                        </span>
+                      </div>
+                      {restriction.notes && (
+                        <p className="text-sm text-muted-foreground">
+                          {restriction.notes}
+                        </p>
+                      )}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDeleteRestriction(restriction.id)}
+                      className="text-destructive"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   </div>
                 </div>
               ))}

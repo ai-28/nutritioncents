@@ -166,6 +166,89 @@ async function createDietaryRestriction(userId, restrictionData) {
   return restriction;
 }
 
+async function updateDietaryRestriction(restrictionId, userId, updates) {
+  const userIdStr = String(userId);
+  const restrictionIdStr = String(restrictionId);
+  
+  const [restriction] = await sql`
+    UPDATE dietary_restrictions 
+    SET 
+      restriction_type = ${updates.restriction_type},
+      restriction_name = ${updates.restriction_name},
+      strictness = ${updates.strictness},
+      notes = ${updates.notes},
+      is_active = ${updates.is_active !== undefined ? updates.is_active : true},
+      updated_at = CURRENT_TIMESTAMP
+    WHERE id = ${restrictionIdStr} AND user_id = ${userIdStr}
+    RETURNING *
+  `;
+  return restriction;
+}
+
+async function deleteDietaryRestriction(restrictionId, userId) {
+  const userIdStr = String(userId);
+  const restrictionIdStr = String(restrictionId);
+  
+  const [restriction] = await sql`
+    UPDATE dietary_restrictions 
+    SET is_active = FALSE, updated_at = CURRENT_TIMESTAMP
+    WHERE id = ${restrictionIdStr} AND user_id = ${userIdStr}
+    RETURNING *
+  `;
+  return restriction;
+}
+
+// Health Goals
+async function getHealthGoals(userId) {
+  const userIdStr = String(userId);
+  const goals = await sql`
+    SELECT * FROM health_goals
+    WHERE user_id = ${userIdStr} AND is_active = TRUE
+    ORDER BY priority DESC, created_at DESC
+  `;
+  return goals;
+}
+
+async function createHealthGoal(userId, goalData) {
+  const userIdStr = String(userId);
+  const { goalType, goalName, targetWeightKg, currentWeightKg, targetDate, priority, notes } = goalData;
+  
+  const [goal] = await sql`
+    INSERT INTO health_goals (
+      user_id, goal_type, goal_name, target_weight_kg, current_weight_kg, 
+      target_date, priority, notes
+    ) VALUES (
+      ${userIdStr}, ${goalType}, ${goalName || null}, 
+      ${targetWeightKg || null}, ${currentWeightKg || null},
+      ${targetDate || null}, ${priority || 1}, ${notes || null}
+    )
+    RETURNING *
+  `;
+  return goal;
+}
+
+async function updateHealthGoal(goalId, userId, updates) {
+  const userIdStr = String(userId);
+  const goalIdStr = String(goalId);
+  
+  const [goal] = await sql`
+    UPDATE health_goals 
+    SET 
+      goal_type = ${updates.goal_type},
+      goal_name = ${updates.goal_name},
+      target_weight_kg = ${updates.target_weight_kg},
+      current_weight_kg = ${updates.current_weight_kg},
+      target_date = ${updates.target_date},
+      priority = ${updates.priority},
+      notes = ${updates.notes},
+      is_active = ${updates.is_active !== undefined ? updates.is_active : true},
+      updated_at = CURRENT_TIMESTAMP
+    WHERE id = ${goalIdStr} AND user_id = ${userIdStr}
+    RETURNING *
+  `;
+  return goal;
+}
+
 module.exports = {
   getAllergies,
   createAllergy,
@@ -175,4 +258,9 @@ module.exports = {
   getHealthRecommendations,
   getDietaryRestrictions,
   createDietaryRestriction,
+  updateDietaryRestriction,
+  deleteDietaryRestriction,
+  getHealthGoals,
+  createHealthGoal,
+  updateHealthGoal,
 };
