@@ -155,14 +155,14 @@ export default function Login() {
           {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
         </button>
       </div>
-
+{/* 
       <div className="h-48 overflow-hidden">
         <img 
           src="/assets/food-banner.jpg" 
           alt="Healthy food" 
           className="w-full h-full object-cover"
         />
-      </div>
+      </div> */}
     </div>
   );
 }
