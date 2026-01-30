@@ -51,20 +51,28 @@ export default function AnalyticsPage() {
     const weekStartDate = startOfWeek(today, { weekStartsOn: 0 });
     const map = new Map();
     (weeklyData?.days || []).forEach((d) => {
-      map.set(String(d.summary_date).slice(0, 10), d);
+      const dateKey = String(d.summary_date).slice(0, 10);
+      map.set(dateKey, d);
     });
 
     return Array.from({ length: 7 }).map((_, idx) => {
       const date = addDays(weekStartDate, idx);
       const key = format(date, 'yyyy-MM-dd');
       const row = map.get(key);
+      
+      // Extract values from database - ensure we're getting protein, carbs, and fats
+      const calories = Math.round(parseFloat(row?.total_calories || 0));
+      const protein = Math.round(parseFloat(row?.total_protein || 0));
+      const carbs = Math.round(parseFloat(row?.total_carbs || 0));
+      const fats = Math.round(parseFloat(row?.total_fats || 0));
+      
       return {
         key,
         dow: format(date, 'EEEEE'), // S M T W T F S
-        calories: Math.round(parseFloat(row?.total_calories || 0)),
-        protein: Math.round(parseFloat(row?.total_protein || 0)),
-        carbs: Math.round(parseFloat(row?.total_carbs || 0)),
-        fats: Math.round(parseFloat(row?.total_fats || 0)),
+        calories,
+        protein,
+        carbs,
+        fats,
       };
     });
   }, [weeklyData]);

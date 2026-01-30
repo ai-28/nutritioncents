@@ -92,8 +92,8 @@ async function extractWithOpenAI(text) {
       messages: [{
         role: "user",
         content: `Extract nutrition information from this meal description: "${text}". 
-        Return a JSON object with an "items" array. Each item in the array should have: food_name, quantity, unit, calories, protein (grams), carbs (grams), fats (grams).
-        Be generous with estimates. Return only valid JSON object with this structure: {"items": [{"food_name": "...", "quantity": 1, "unit": "cup", "calories": 200, "protein": 10, "carbs": 30, "fats": 5}]}`
+        Return a JSON object with an "items" array. Each item in the array should have: food_name, quantity, unit, calories, protein (grams), carbs (grams), fats (grams), fiber (grams), sugar (grams), sodium (milligrams).
+        Be generous with estimates. Return only valid JSON object with this structure: {"items": [{"food_name": "...", "quantity": 1, "unit": "cup", "calories": 200, "protein": 10, "carbs": 30, "fats": 5, "fiber": 3, "sugar": 5, "sodium": 300}]}`
       }],
       response_format: { type: "json_object" },
       temperature: 0.3,
@@ -187,7 +187,7 @@ async function extractImageWithOpenAI(imageUrlOrBase64) {
         content: [
           {
             type: "text",
-            text: "Analyze this food image and extract all food items with estimated quantities and nutrition information. Return a JSON object with an 'items' array. Each item should have: food_name, quantity, unit, calories, protein (grams), carbs (grams), fats (grams). Be specific about portions. Return only valid JSON object with this structure: {\"items\": [{\"food_name\": \"...\", \"quantity\": 1, \"unit\": \"cup\", \"calories\": 200, \"protein\": 10, \"carbs\": 30, \"fats\": 5}]}"
+            text: "Analyze this food image and extract all food items with estimated quantities and nutrition information. Return a JSON object with an 'items' array. Each item should have: food_name, quantity, unit, calories, protein (grams), carbs (grams), fats (grams), fiber (grams), sugar (grams), sodium (milligrams). Be specific about portions. Return only valid JSON object with this structure: {\"items\": [{\"food_name\": \"...\", \"quantity\": 1, \"unit\": \"cup\", \"calories\": 200, \"protein\": 10, \"carbs\": 30, \"fats\": 5, \"fiber\": 3, \"sugar\": 5, \"sodium\": 300}]}"
           },
           imageContent
         ]
@@ -244,6 +244,9 @@ async function extractFromBarcode(barcode) {
         protein: product.nutriments?.proteins_100g || 0,
         carbs: product.nutriments?.carbohydrates_100g || 0,
         fats: product.nutriments?.fat_100g || 0,
+        fiber: product.nutriments?.fiber_100g || 0,
+        sugar: product.nutriments?.sugars_100g || 0,
+        sodium: (product.nutriments?.sodium_100g || 0) * 1000, // Convert from g to mg
         barcode: barcode,
         confidence_score: 1.0,
       }];
@@ -280,6 +283,9 @@ async function extractFromBarcodeWithOpenAI(barcode) {
     "protein": estimated protein in grams per 100g,
     "carbs": estimated carbs in grams per 100g,
     "fats": estimated fats in grams per 100g,
+    "fiber": estimated fiber in grams per 100g,
+    "sugar": estimated sugar in grams per 100g,
+    "sodium": estimated sodium in milligrams per 100g,
     "barcode": "${barcode}",
     "confidence_score": 0.8
   }]
@@ -358,14 +364,14 @@ If you cannot find the product, return an empty items array. Be as accurate as p
 function extractWithPatternMatching(text) {
   const items = [];
   const commonFoods = {
-    'egg': { calories: 70, protein: 6, carbs: 0.6, fats: 5 },
-    'eggs': { calories: 70, protein: 6, carbs: 0.6, fats: 5 },
-    'rice': { calories: 130, protein: 2.7, carbs: 28, fats: 0.3 },
-    'chicken': { calories: 165, protein: 31, carbs: 0, fats: 3.6 },
-    'coffee': { calories: 2, protein: 0.3, carbs: 0, fats: 0 },
-    'bread': { calories: 265, protein: 9, carbs: 49, fats: 3.2 },
-    'banana': { calories: 89, protein: 1.1, carbs: 23, fats: 0.3 },
-    'apple': { calories: 52, protein: 0.3, carbs: 14, fats: 0.2 },
+    'egg': { calories: 70, protein: 6, carbs: 0.6, fats: 5, fiber: 0, sugar: 0.6, sodium: 70 },
+    'eggs': { calories: 70, protein: 6, carbs: 0.6, fats: 5, fiber: 0, sugar: 0.6, sodium: 70 },
+    'rice': { calories: 130, protein: 2.7, carbs: 28, fats: 0.3, fiber: 0.4, sugar: 0, sodium: 1 },
+    'chicken': { calories: 165, protein: 31, carbs: 0, fats: 3.6, fiber: 0, sugar: 0, sodium: 74 },
+    'coffee': { calories: 2, protein: 0.3, carbs: 0, fats: 0, fiber: 0, sugar: 0, sodium: 5 },
+    'bread': { calories: 265, protein: 9, carbs: 49, fats: 3.2, fiber: 2.7, sugar: 5.7, sodium: 491 },
+    'banana': { calories: 89, protein: 1.1, carbs: 23, fats: 0.3, fiber: 2.6, sugar: 12, sodium: 1 },
+    'apple': { calories: 52, protein: 0.3, carbs: 14, fats: 0.2, fiber: 2.4, sugar: 10, sodium: 1 },
   };
 
   const words = text.toLowerCase().split(/[,\s]+/);
@@ -388,14 +394,18 @@ function extractWithPatternMatching(text) {
     } else {
       for (const [food, nutrition] of Object.entries(commonFoods)) {
         if (word.includes(food)) {
+          const multiplier = currentUnit === 'cup' ? 1.5 : currentQuantity;
           items.push({
             food_name: word,
             quantity: currentQuantity,
             unit: currentUnit,
-            calories: Math.round(nutrition.calories * (currentUnit === 'cup' ? 1.5 : currentQuantity)),
-            protein: Math.round(nutrition.protein * (currentUnit === 'cup' ? 1.5 : currentQuantity) * 10) / 10,
-            carbs: Math.round(nutrition.carbs * (currentUnit === 'cup' ? 1.5 : currentQuantity) * 10) / 10,
-            fats: Math.round(nutrition.fats * (currentUnit === 'cup' ? 1.5 : currentQuantity) * 10) / 10,
+            calories: Math.round(nutrition.calories * multiplier),
+            protein: Math.round(nutrition.protein * multiplier * 10) / 10,
+            carbs: Math.round(nutrition.carbs * multiplier * 10) / 10,
+            fats: Math.round(nutrition.fats * multiplier * 10) / 10,
+            fiber: Math.round(nutrition.fiber * multiplier * 10) / 10,
+            sugar: Math.round(nutrition.sugar * multiplier * 10) / 10,
+            sodium: Math.round(nutrition.sodium * multiplier),
             confidence_score: 0.6,
           });
           currentQuantity = 1;
@@ -414,6 +424,9 @@ function extractWithPatternMatching(text) {
     protein: 10,
     carbs: 30,
     fats: 5,
+    fiber: 2,
+    sugar: 5,
+    sodium: 300,
     confidence_score: 0.3,
   }];
 }
