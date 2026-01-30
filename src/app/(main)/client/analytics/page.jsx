@@ -75,25 +75,15 @@ export default function AnalyticsPage() {
       const carbs = Math.round(parseFloat(row?.total_carbs || 0));
       const fats = Math.round(parseFloat(row?.total_fats || 0));
       
-      const dataPoint = {
+      return {
         key, // Keep the date key for debugging
         date: key, // Also include as 'date' for tooltip
         dow: format(date, 'EEEEE'), // S M T W T F S
-        index: idx, // Add explicit index for alignment
-        dayLabel: format(date, 'EEEEE'), // Day abbreviation for display
-        dayIndex: idx, // Unique index for X-axis
         calories,
         protein,
         carbs,
         fats,
       };
-      
-      // Debug: log the data point to verify correct mapping
-      if (calories > 0) {
-        console.log(`Series[${idx}] - Date: ${key}, Dow: ${dataPoint.dow}, Calories: ${calories}`);
-      }
-      
-      return dataPoint;
     });
     
     return series;
@@ -194,29 +184,20 @@ export default function AnalyticsPage() {
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis 
-                    dataKey="dayIndex"
-                    type="number"
-                    scale="point"
+                    dataKey="dow" 
                     tickLine={false} 
                     axisLine={false}
-                    domain={[0, 6]}
-                    tickCount={7}
-                    tickFormatter={(value) => {
-                      // Get the day label from the data array
-                      if (weekSeries && weekSeries[value] !== undefined) {
-                        return weekSeries[value].dayLabel;
-                      }
-                      return '';
+                    // Use index as key to ensure correct mapping
+                    tickFormatter={(value, index) => {
+                      // Return the day abbreviation
+                      return value;
                     }}
                   />
                   <YAxis tickLine={false} axisLine={false} width={32} />
                   <Tooltip 
                     content={<MacroTooltip />}
-                    // Use shared cursor to ensure correct data point selection
-                    shared={false}
+                    // Ensure tooltip uses the correct data point
                     cursor={{ stroke: 'hsl(var(--primary))', strokeWidth: 1 }}
-                    // Ensure tooltip shows data for the exact point being hovered
-                    active={true}
                   />
                   <Area
                     type="monotone"
@@ -224,9 +205,7 @@ export default function AnalyticsPage() {
                     stroke="hsl(var(--primary))"
                     strokeWidth={2.5}
                     fill="url(#caloriesFill)"
-                    activeDot={{ r: 5, stroke: 'hsl(var(--primary))', strokeWidth: 2 }}
-                    // Ensure data points are properly connected
-                    connectNulls={false}
+                    activeDot={{ r: 5 }}
                   />
                 </AreaChart>
               </ResponsiveContainer>
