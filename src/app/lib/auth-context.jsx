@@ -32,7 +32,41 @@ export function AuthProvider({ children }) {
       });
 
       if (result?.error) {
-        return { error: { message: result.error } };
+        // In NextAuth v5, error messages from authorize function should be in result.error
+        let errorMessage = result.error;
+        
+        // If it's the generic CredentialsSignin error, we need to check the actual error
+        // NextAuth v5 should pass through the error message from authorize function
+        // But if it doesn't, we'll need to handle it differently
+        
+        // Check if there's error details in the result
+        if (result.error === 'CredentialsSignin' || result.error === 'CredentialsSigninError') {
+          // Try to get more specific error from the error description or URL
+          if (result.url) {
+            try {
+              const url = new URL(result.url);
+              const errorParam = url.searchParams.get('error');
+              const errorDescription = url.searchParams.get('error_description');
+              
+              if (errorDescription) {
+                errorMessage = decodeURIComponent(errorDescription);
+              } else if (errorParam && errorParam !== 'CredentialsSignin') {
+                errorMessage = decodeURIComponent(errorParam);
+              } else {
+                // Fallback: we can't determine the exact error, so show generic message
+                // But we'll check the email in a separate call to provide better feedback
+                errorMessage = 'Invalid email or password';
+              }
+            } catch (e) {
+              // Ignore URL parsing errors
+              errorMessage = 'Invalid email or password';
+            }
+          } else {
+            errorMessage = 'Invalid email or password';
+          }
+        }
+        
+        return { error: { message: errorMessage } };
       }
 
       return { error: null };

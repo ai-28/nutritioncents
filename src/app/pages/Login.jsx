@@ -44,7 +44,9 @@ export default function Login() {
       } else {
         const { error } = await signIn(email, password);
         if (error) {
-          toast.error(error.message || 'Invalid email or password');
+          // Display the specific error message from authentication
+          const errorMessage = error.message || 'Invalid email or password';
+          toast.error(errorMessage);
           setLoading(false);
           return;
         }
@@ -150,7 +152,7 @@ export default function Login() {
 
         <button
           onClick={() => setIsSignUp(!isSignUp)}
-          className="mt-4 text-sm text-primary hover:underline"
+          className="mt-4 text-sm text-blue-600 underline hover:text-blue-700"
         >
           {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
         </button>

@@ -18,7 +18,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             async authorize(credentials) {
                 if (!credentials?.email || !credentials?.password) {
                     console.error('[Auth] Missing credentials');
-                    return null;
+                    throw new Error('Email and password are required');
                 }
 
                 try {
@@ -27,19 +27,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
                     if (!user) {
                         console.error(`[Auth] User not found: ${credentials.email}`);
-                        return null;
+                        throw new Error('No account found with this email address');
                     }
 
                     if (!user.password_hash) {
                         console.error(`[Auth] User has no password hash: ${credentials.email}`);
-                        return null;
+                        throw new Error('Account setup incomplete. Please contact support.');
                     }
 
                     const isPasswordValid = await verifyPassword(user, credentials.password);
 
                     if (!isPasswordValid) {
                         console.error(`[Auth] Invalid password for: ${credentials.email}`);
-                        return null;
+                        throw new Error('Incorrect password. Please try again.');
                     }
 
                     // Update last login
@@ -55,8 +55,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                     };
                 } catch (error) {
                     console.error('[Auth] Error during authorization:', error);
-                    console.error('[Auth] Error stack:', error.stack);
-                    return null;
+                    // If it's already an Error with a message, re-throw it
+                    if (error instanceof Error && error.message) {
+                        throw error;
+                    }
+                    // Otherwise, throw a generic error
+                    throw new Error('Authentication failed. Please try again.');
                 }
             }
         })
