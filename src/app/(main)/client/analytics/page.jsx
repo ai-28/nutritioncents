@@ -80,7 +80,8 @@ export default function AnalyticsPage() {
         date: key, // Also include as 'date' for tooltip
         dow: format(date, 'EEEEE'), // S M T W T F S
         index: idx, // Add explicit index for alignment
-        name: format(date, 'EEEEE'), // Use name for X-axis
+        dayLabel: format(date, 'EEEEE'), // Day abbreviation for display
+        dayIndex: idx, // Unique index for X-axis
         calories,
         protein,
         carbs,
@@ -193,12 +194,20 @@ export default function AnalyticsPage() {
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis 
-                    dataKey="name"
-                    type="category"
+                    dataKey="dayIndex"
+                    type="number"
+                    scale="point"
                     tickLine={false} 
                     axisLine={false}
-                    // Use category type to ensure proper alignment
-                    allowDuplicatedCategory={false}
+                    domain={[0, 6]}
+                    tickCount={7}
+                    tickFormatter={(value) => {
+                      // Get the day label from the data array
+                      if (weekSeries && weekSeries[value] !== undefined) {
+                        return weekSeries[value].dayLabel;
+                      }
+                      return '';
+                    }}
                   />
                   <YAxis tickLine={false} axisLine={false} width={32} />
                   <Tooltip 
