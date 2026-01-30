@@ -31,7 +31,32 @@ async function createNutritionGoal(userId, goalData) {
     healthGoalId,
   } = goalData;
 
-  // Deactivate existing goals
+  // Check if there's an active goal for this user (check for any active goal)
+  const today = new Date().toISOString().split('T')[0];
+  const existingGoal = await getActiveNutritionGoals(userIdStr, today);
+
+  if (existingGoal) {
+    // Update existing goal instead of creating a new one
+    const updates = {
+      calories_target: caloriesTarget,
+      protein_target: proteinTarget || 0,
+      carbs_target: carbsTarget || 0,
+      fats_target: fatsTarget || 0,
+      fiber_target: fiberTarget || 0,
+      sodium_target: sodiumTarget || 0,
+      sugar_target: sugarTarget || 0,
+      water_target: waterTarget || 0,
+      start_date: startDate || new Date().toISOString().split('T')[0],
+      end_date: endDate || null,
+      health_goal_id: healthGoalId || null,
+      is_active: true,
+    };
+
+    return await updateNutritionGoal(existingGoal.id, userIdStr, updates);
+  }
+
+  // No existing goal, create a new one
+  // Deactivate any other active goals first
   await sql`
     UPDATE nutrition_goals 
     SET is_active = FALSE 
@@ -64,32 +89,32 @@ async function createNutritionGoal(userId, goalData) {
 
 async function updateNutritionGoal(goalId, userId, updates) {
   const userIdStr = String(userId);
+  const goalIdStr = String(goalId);
+  
   if (Object.keys(updates).length === 0) {
     throw new Error('No fields to update');
   }
 
-  // Build update query dynamically
-  const setParts = [];
-  const values = [];
-  let paramIndex = 1;
-
-  for (const [key, value] of Object.entries(updates)) {
-    if (value !== undefined) {
-      setParts.push(`${key} = $${paramIndex}`);
-      values.push(value);
-      paramIndex++;
-    }
-  }
-
-  values.push(goalId, userIdStr);
-
-  // Use raw query for dynamic updates
-  const [goal] = await sql.unsafe(`
+  // Update all provided fields - since we're always providing all values from createNutritionGoal
+  const [goal] = await sql`
     UPDATE nutrition_goals 
-    SET ${setParts.join(', ')}, updated_at = CURRENT_TIMESTAMP
-    WHERE id = $${paramIndex} AND user_id = $${paramIndex + 1}
+    SET 
+      calories_target = ${updates.calories_target},
+      protein_target = ${updates.protein_target},
+      carbs_target = ${updates.carbs_target},
+      fats_target = ${updates.fats_target},
+      fiber_target = ${updates.fiber_target},
+      sodium_target = ${updates.sodium_target},
+      sugar_target = ${updates.sugar_target},
+      water_target = ${updates.water_target},
+      start_date = ${updates.start_date},
+      end_date = ${updates.end_date},
+      health_goal_id = ${updates.health_goal_id},
+      is_active = ${updates.is_active},
+      updated_at = CURRENT_TIMESTAMP
+    WHERE id = ${goalIdStr} AND user_id = ${userIdStr}
     RETURNING *
-  `, values);
+  `;
 
   return goal;
 }
