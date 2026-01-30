@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 
 const navItems = [
   { icon: Home, label: 'Dashboard', path: '/client/dashboard' },
-  { icon: BarChart3, label: 'Analytics', path: '/client/analytics' },
+  { icon: BarChart3, label: 'Progress', path: '/client/analytics' },
   { icon: null, label: 'Record', path: '/meals/add' }, // Center button
   { icon: Scale, label: 'Weight', path: '/client/weight' },
   { icon: BookOpen, label: 'More', path: '/client/more' },

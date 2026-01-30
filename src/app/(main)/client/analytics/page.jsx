@@ -125,7 +125,7 @@ export default function AnalyticsPage() {
                 <div className="text-sm text-muted-foreground">Day Streak</div>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
               {streakWeek.map((d) => (
                 <div key={d.key} className="flex flex-col items-center gap-1">
                   <div className="text-[10px] text-muted-foreground">{d.label}</div>
