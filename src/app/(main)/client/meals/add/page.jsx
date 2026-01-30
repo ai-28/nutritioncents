@@ -7,7 +7,7 @@ import { MealTypeTabs } from '@/components/ui/meal-type-tabs';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { Mic, Image, Barcode, Loader2, X, Edit2, AlertTriangle } from 'lucide-react';
+import { Mic, Image, Barcode, Loader2, X, Edit2, AlertTriangle, FileText } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -215,35 +215,40 @@ function AddMealPageInner() {
                 size="sm"
                 onClick={() => setInputMethod('text')}
                 className="flex-1"
+                title="Text Input"
               >
-                ✍️ Text
+                <FileText className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Text</span>
               </Button>
               <Button
                 variant={inputMethod === 'voice' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setInputMethod('voice')}
                 className="flex-1"
+                title="Voice Input"
               >
-                <Mic className="w-4 h-4 mr-2" />
-                Voice
+                <Mic className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Voice</span>
               </Button>
               <Button
                 variant={inputMethod === 'image' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setInputMethod('image')}
                 className="flex-1"
+                title="Photo Input"
               >
-                <Image className="w-4 h-4 mr-2" />
-                Photo
+                <Image className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Photo</span>
               </Button>
               <Button
                 variant={inputMethod === 'barcode' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setInputMethod('barcode')}
                 className="flex-1"
+                title="Scan Barcode"
               >
-                <Barcode className="w-4 h-4 mr-2" />
-                Scan
+                <Barcode className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Scan</span>
               </Button>
             </div>
           </div>
