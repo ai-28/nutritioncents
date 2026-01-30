@@ -4,13 +4,12 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { UserLayout } from '@/components/layout/UserLayout';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/lib/auth-context';
 import { toast } from 'sonner';
 import { 
-  Settings, Bell, Shield, Moon, Sun, 
-  Globe, Trash2, LogOut, Save 
+  Settings, Bell, Shield, Moon, 
+  Trash2, LogOut, Save 
 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
@@ -25,8 +24,6 @@ export default function SettingsPage() {
     notifications: true,
     emailUpdates: true,
     darkMode: false,
-    language: 'en',
-    units: 'metric',
   });
 
   useEffect(() => {
@@ -153,40 +150,6 @@ export default function SettingsPage() {
                   setSettings(prev => ({ ...prev, darkMode: checked }))
                 }
               />
-            </div>
-          </div>
-        </div>
-
-        {/* Preferences */}
-        <div className="bg-card rounded-lg border border-border p-4 space-y-4">
-          <h2 className="text-lg font-semibold flex items-center gap-2">
-            <Globe className="w-5 h-5" />
-            Preferences
-          </h2>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Language</Label>
-              <select
-                value={settings.language}
-                onChange={(e) => setSettings(prev => ({ ...prev, language: e.target.value }))}
-                className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              >
-                <option value="en">English</option>
-                <option value="es">Spanish</option>
-                <option value="fr">French</option>
-                <option value="de">German</option>
-              </select>
-            </div>
-            <div className="space-y-2">
-              <Label>Units</Label>
-              <select
-                value={settings.units}
-                onChange={(e) => setSettings(prev => ({ ...prev, units: e.target.value }))}
-                className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              >
-                <option value="metric">Metric (kg, cm)</option>
-                <option value="imperial">Imperial (lbs, ft)</option>
-              </select>
             </div>
           </div>
         </div>
