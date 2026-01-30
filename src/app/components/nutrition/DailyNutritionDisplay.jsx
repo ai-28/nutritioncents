@@ -242,16 +242,12 @@ export function DailyNutritionDisplay({ summary, goals }) {
 }
 
 function MacroBar({ label, current, target, unit, percentage, color }) {
-  const diff = target - current;
-  const status = diff >= 0 ? 'left' : 'over';
-  const remaining = Math.abs(Math.round(diff));
-  
   return (
     <div className="space-y-2">
       <div className="text-sm">
         <div className="font-medium">{label}</div>
-        <div className="text-muted-foreground mt-1">
-          {remaining}{unit} {status}
+        <div className="text-muted-foreground">
+          {current}/{target}{unit}
         </div>
       </div>
       <div className="h-2 bg-muted rounded-full overflow-hidden">
