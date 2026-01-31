@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { UserLayout } from '@/components/layout/UserLayout';
 import { DailyNutritionDisplay } from '@/components/nutrition/DailyNutritionDisplay';
 import { MealCard } from '@/components/nutrition/MealCard';
+import { WaterInput } from '@/components/nutrition/WaterInput';
 import { useAuth } from '@/lib/auth-context';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -182,6 +183,27 @@ export default function DashboardPage() {
 
         {/* Daily Nutrition Summary */}
         <DailyNutritionDisplay summary={nutrition} goals={goals} />
+
+        {/* Water Intake */}
+        <WaterInput
+          date={selectedDate}
+          currentWater={nutrition?.total_water || 0}
+          waterTarget={goals?.water_target || 2000}
+          onUpdate={(newTotal) => {
+            // Update local state to reflect water change
+            if (nutrition) {
+              setNutrition({ ...nutrition, total_water: newTotal });
+            }
+            // Invalidate cache
+            const cacheKey = `${selectedDate}`;
+            if (dataCacheRef.current[cacheKey]) {
+              dataCacheRef.current[cacheKey].nutrition = {
+                ...nutrition,
+                total_water: newTotal,
+              };
+            }
+          }}
+        />
 
         {/* Meals */}
         <div className="space-y-4">

@@ -37,6 +37,8 @@ export function DailyNutritionDisplay({ summary, goals }) {
   const fiber = parseFloat(summary.total_fiber || 0);
   const sugar = parseFloat(summary.total_sugar || 0);
   const sodium = parseFloat(summary.total_sodium || 0);
+  const water = parseFloat(summary.total_water || 0);
+  const waterTarget = goals?.water_target || 2000;
 
   const [carouselApi, setCarouselApi] = useState(null);
   const [slideIndex, setSlideIndex] = useState(0);
@@ -173,7 +175,7 @@ export function DailyNutritionDisplay({ summary, goals }) {
           {/* Slide 2: Micros + Health score */}
           <CarouselItem className="pl-3">
             <div className="space-y-5">
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <MicroCard
                   label="Fiber"
                   unit="g"
@@ -201,6 +203,15 @@ export function DailyNutritionDisplay({ summary, goals }) {
                   ring="stroke-amber-500"
                   icon={<Droplet className="h-4 w-4 text-amber-600" />}
                   displayScale={1000} // stored in mg in DB? keep as-is; this only affects rounding display
+                />
+                <MicroCard
+                  label="Water"
+                  unit="ml"
+                  current={water}
+                  target={waterTarget}
+                  color="text-blue-600"
+                  ring="stroke-blue-500"
+                  icon={<Droplet className="h-4 w-4 text-blue-600" />}
                 />
               </div>
 

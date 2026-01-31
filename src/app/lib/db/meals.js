@@ -233,6 +233,7 @@ async function getDailyNutritionSummary(userId, date) {
     total_fiber: 0,
     total_sodium: 0,
     total_sugar: 0,
+    total_water: 0,
     meal_count: meals.length,
   };
 
