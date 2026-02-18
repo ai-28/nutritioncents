@@ -4,6 +4,11 @@ import { auth } from '@/lib/auth';
 export async function middleware(request) {
     const { pathname } = request.nextUrl;
 
+    // Allow access to root landing page (public)
+    if (pathname === '/') {
+        return NextResponse.next();
+    }
+
     // Allow access to login page, signup, and public API routes
     if (
         pathname.startsWith('/login') || 
