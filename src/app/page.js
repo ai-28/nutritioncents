@@ -265,14 +265,14 @@ export default function Home() {
           <p className="text-base sm:text-lg lg:text-xl text-blue-50 mb-6 sm:mb-8 max-w-2xl mx-auto px-4 leading-relaxed">
             Join thousands of users achieving their health goals with AI-powered nutrition intelligence
           </p>
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4 items-stretch sm:items-center">
             <Link href="/login" className="w-full sm:w-auto">
-              <Button size="lg" className="w-full sm:w-auto bg-white text-blue-900 hover:bg-blue-50 text-base sm:text-lg px-6 sm:px-8 py-6 sm:py-7" style={{ backgroundColor: '#ffffff', color: '#1e3a8a' }}>
+              <Button size="lg" className="w-full sm:w-auto bg-white text-blue-900 hover:bg-blue-50 text-base sm:text-lg px-6 sm:px-8 py-6 sm:py-7 min-h-[56px] sm:min-h-[60px]" style={{ backgroundColor: '#ffffff', color: '#1e3a8a' }}>
                 Start Free Trial
               </Button>
             </Link>
             <Link href="/login" className="w-full sm:w-auto">
-              <Button size="lg" variant="outline" className="w-full sm:w-auto border-2 border-white text-white hover:bg-white/10 hover:text-white text-base text-[#1e3a8a] sm:text-lg px-6 sm:px-8 py-6 sm:py-7" style={{ borderColor: '#ffffff'}}>
+              <Button size="lg" variant="outline" className="w-full sm:w-auto border-2 border-white text-white hover:bg-white/10 hover:text-white text-base text-[#1e3a8a] sm:text-lg px-6 sm:px-8 py-6 sm:py-7 min-h-[56px] sm:min-h-[60px]" style={{ borderColor: '#ffffff' }}>
                 Schedule Demo
               </Button>
             </Link>
