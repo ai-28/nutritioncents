@@ -9,7 +9,7 @@ export function Providers({ children }) {
     <SessionProvider basePath="/api/auth">
       <AuthProvider>
         {children}
-        <Sonner position="top-center" />
+        <Sonner position="top-right" />
       </AuthProvider>
     </SessionProvider>
   );

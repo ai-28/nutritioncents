@@ -27,7 +27,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { Plus, Edit, Trash2 } from 'lucide-react';
+import { Plus, Edit, Trash2, Loader2 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 
 export default function AdminAdminsPage() {
@@ -39,6 +39,7 @@ export default function AdminAdminsPage() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedAdmin, setSelectedAdmin] = useState(null);
+  const [isCreating, setIsCreating] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -124,6 +125,7 @@ export default function AdminAdminsPage() {
 
   const handleCreateSubmit = async (e) => {
     e.preventDefault();
+    setIsCreating(true);
     try {
       const response = await fetch('/api/admin/admins', {
         method: 'POST',
@@ -143,6 +145,8 @@ export default function AdminAdminsPage() {
     } catch (error) {
       console.error('Error creating admin:', error);
       toast.error('Failed to create admin user');
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -213,13 +217,17 @@ export default function AdminAdminsPage() {
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="space-y-4 md:space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold">Admin Users</h1>
-            <p className="text-muted-foreground">Manage admin accounts and permissions</p>
+            <h1 className="text-2xl md:text-3xl font-bold">Admin Users</h1>
+            <p className="text-sm md:text-base text-muted-foreground">Manage admin accounts and permissions</p>
           </div>
-          <Button onClick={handleCreate}>
+          <Button 
+            onClick={handleCreate}
+            style={{ backgroundColor: '#0f172a' }}
+            className="text-white hover:opacity-90 w-full sm:w-auto"
+          >
             <Plus className="h-4 w-4 mr-2" />
             Add Admin
           </Button>
@@ -242,54 +250,104 @@ export default function AdminAdminsPage() {
                 <div className="text-muted-foreground">No admin users found</div>
               </div>
             ) : (
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Created</TableHead>
-                      <TableHead>Last Login</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {admins.map((admin) => (
-                      <TableRow key={admin.id}>
-                        <TableCell className="font-medium">{admin.name}</TableCell>
-                        <TableCell>{admin.email}</TableCell>
-                        <TableCell>{formatDate(admin.created_at)}</TableCell>
-                        <TableCell>{formatDateTime(admin.last_login_at)}</TableCell>
-                        <TableCell>
-                          <Badge variant={admin.is_active ? 'default' : 'secondary'}>
-                            {admin.is_active ? 'Active' : 'Inactive'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleEdit(admin)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDelete(admin)}
-                              disabled={admin.id === user.id}
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </div>
-                        </TableCell>
+              <>
+                {/* Desktop Table */}
+                <div className="hidden md:block rounded-md border overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Created</TableHead>
+                        <TableHead>Last Login</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                    </TableHeader>
+                    <TableBody>
+                      {admins.map((admin) => (
+                        <TableRow key={admin.id}>
+                          <TableCell className="font-medium">{admin.name}</TableCell>
+                          <TableCell>{admin.email}</TableCell>
+                          <TableCell>{formatDate(admin.created_at)}</TableCell>
+                          <TableCell>{formatDateTime(admin.last_login_at)}</TableCell>
+                          <TableCell>
+                            <Badge variant={admin.is_active ? 'default' : 'secondary'}>
+                              {admin.is_active ? 'Active' : 'Inactive'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEdit(admin)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDelete(admin)}
+                                disabled={admin.id === user.id}
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {/* Mobile Cards */}
+                <div className="md:hidden space-y-4">
+                  {admins.map((admin) => (
+                    <div key={admin.id} className="border rounded-lg p-4 space-y-3">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="font-medium text-base">{admin.name}</div>
+                          <div className="text-sm text-muted-foreground mt-1">{admin.email}</div>
+                        </div>
+                        <Badge variant={admin.is_active ? 'default' : 'secondary'} className="ml-2">
+                          {admin.is_active ? 'Active' : 'Inactive'}
+                        </Badge>
+                      </div>
+                      <div className="space-y-1 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Created:</span>
+                          <span>{formatDate(admin.created_at)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Last Login:</span>
+                          <span className="text-xs">{formatDateTime(admin.last_login_at)}</span>
+                        </div>
+                      </div>
+                      <div className="flex justify-end gap-2 pt-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEdit(admin)}
+                        >
+                          <Edit className="h-4 w-4 mr-2" />
+                          Edit
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(admin)}
+                          disabled={admin.id === user.id}
+                          className="text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
             )}
           </CardContent>
         </Card>
@@ -346,10 +404,29 @@ export default function AdminAdminsPage() {
               </div>
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setCreateDialogOpen(false)}>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => setCreateDialogOpen(false)}
+                disabled={isCreating}
+              >
                 Cancel
               </Button>
-              <Button type="submit">Create</Button>
+              <Button 
+                type="submit"
+                style={{ backgroundColor: '#0f172a' }}
+                className="text-white hover:opacity-90"
+                disabled={isCreating}
+              >
+                {isCreating ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  'Create'
+                )}
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>

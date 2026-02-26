@@ -22,7 +22,7 @@ export function MobileNav() {
   const rightItems = navItems.slice(3);
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border" style={{ backgroundColor: '#0f172a' }}>
       <div className="flex items-center justify-evenly py-2 relative px-4">
         {/* Left items */}
         {leftItems.map((item) => {
@@ -34,8 +34,8 @@ export function MobileNav() {
               className={cn(
                 "flex flex-col items-center justify-center p-2 rounded-lg transition-all relative flex-1",
                 isActive 
-                  ? "text-foreground" 
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "text-white bg-gray-800" 
+                  : "text-gray-400 hover:text-white hover:bg-gray-800"
               )}
             >
               <item.icon className={cn("h-5 w-5", isActive && "scale-110")} />
@@ -70,8 +70,8 @@ export function MobileNav() {
               className={cn(
                 "flex flex-col items-center justify-center p-2 rounded-lg transition-all relative flex-1",
                 isActive 
-                  ? "text-foreground" 
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "text-white bg-gray-800" 
+                  : "text-gray-400 hover:text-white hover:bg-gray-800"
               )}
             >
               <item.icon className={cn("h-5 w-5", isActive && "scale-110")} />

@@ -4,28 +4,37 @@ import { useEffect, useMemo, useState } from 'react';
 import { UserLayout } from '@/components/layout/UserLayout';
 import { useAuth } from '@/lib/auth-context';
 import { cn } from '@/lib/utils';
-import { format, startOfWeek, addDays, subDays } from 'date-fns';
+import { format, startOfWeek, addDays, subDays, addWeeks, subWeeks, endOfWeek } from 'date-fns';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Flame, Check } from 'lucide-react';
+import { Flame, Check, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export default function AnalyticsPage() {
   const { user } = useAuth();
   const [weeklyData, setWeeklyData] = useState(null);
   const [trends, setTrends] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [weekOffset, setWeekOffset] = useState(0); // 0 = current week, -1 = previous week, 1 = next week
 
   useEffect(() => {
     if (user) {
       loadData();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, [user, weekOffset]);
+
+  const getCurrentWeekStart = () => {
+    const today = new Date();
+    const currentWeekStart = startOfWeek(today, { weekStartsOn: 0 });
+    return addWeeks(currentWeekStart, weekOffset);
+  };
 
   const loadData = async () => {
     try {
       setLoading(true);
 
-      const weekStart = format(startOfWeek(new Date(), { weekStartsOn: 0 }), 'yyyy-MM-dd');
+      const weekStartDate = getCurrentWeekStart();
+      const weekStart = format(weekStartDate, 'yyyy-MM-dd');
       const [weeklyRes, trendsRes] = await Promise.all([
         fetch(`/api/analytics/weekly?weekStart=${weekStart}`),
         fetch('/api/analytics/trends?days=60'),
@@ -49,8 +58,7 @@ export default function AnalyticsPage() {
   };
 
   const weekSeries = useMemo(() => {
-    const today = new Date();
-    const weekStartDate = startOfWeek(today, { weekStartsOn: 0 });
+    const weekStartDate = getCurrentWeekStart();
     const map = new Map();
     (weeklyData?.days || []).forEach((d) => {
       // Handle both date objects and strings
@@ -87,7 +95,7 @@ export default function AnalyticsPage() {
     });
     
     return series;
-  }, [weeklyData]);
+  }, [weeklyData, weekOffset]);
 
   const loggedDaysSet = useMemo(() => {
     const set = new Set();
@@ -113,7 +121,7 @@ export default function AnalyticsPage() {
 
   const streakWeek = useMemo(() => {
     const today = new Date();
-    const weekStartDate = startOfWeek(today, { weekStartsOn: 0 });
+    const weekStartDate = getCurrentWeekStart();
     const todayKey = format(today, 'yyyy-MM-dd');
 
     return Array.from({ length: 7 }).map((_, idx) => {
@@ -126,7 +134,7 @@ export default function AnalyticsPage() {
         logged: loggedDaysSet.has(key),
       };
     });
-  }, [loggedDaysSet]);
+  }, [loggedDaysSet, weekOffset]);
 
   return (
     <UserLayout>
@@ -167,7 +175,35 @@ export default function AnalyticsPage() {
         <div className="bg-card rounded-2xl border border-border p-5">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-semibold">Calories</h2>
-            <div className="text-sm text-muted-foreground">This week</div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setWeekOffset(prev => prev - 1)}
+                className="h-8 w-8"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <div className="text-sm text-muted-foreground min-w-[120px] text-center">
+                {(() => {
+                  const weekStart = getCurrentWeekStart();
+                  const weekEnd = endOfWeek(weekStart, { weekStartsOn: 0 });
+                  const isCurrentWeek = weekOffset === 0;
+                  if (isCurrentWeek) {
+                    return 'This week';
+                  }
+                  return `${format(weekStart, 'MMM d')} - ${format(weekEnd, 'MMM d')}`;
+                })()}
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setWeekOffset(prev => prev + 1)}
+                className="h-8 w-8"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
 
           {loading ? (

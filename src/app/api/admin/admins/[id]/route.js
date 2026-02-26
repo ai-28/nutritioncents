@@ -18,7 +18,7 @@ export async function PUT(request, { params }) {
       return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
     }
 
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     const { name, email, password, is_active } = body;
 
@@ -90,7 +90,7 @@ export async function DELETE(request, { params }) {
       return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     // Prevent deleting yourself
     if (session.user.id === id) {

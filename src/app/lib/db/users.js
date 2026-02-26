@@ -149,6 +149,78 @@ async function deleteUser(userId) {
   return user || null;
 }
 
+async function hardDeleteClient(userId) {
+  const userIdStr = String(userId);
+  // Hard delete - this will cascade delete all related records due to ON DELETE CASCADE
+  // First check if user exists and is a client
+  const [user] = await sql`
+    SELECT id, email, name, role
+    FROM users 
+    WHERE id = ${userIdStr} AND role = 'client'
+  `;
+
+  if (!user) {
+    return null;
+  }
+
+  // Delete in proper order to avoid trigger conflicts
+  // 1. Delete meals first - trigger will update daily_nutrition_summary while user still exists
+  await sql`
+    DELETE FROM meals 
+    WHERE user_id = ${userIdStr}
+  `;
+
+  // 2. Delete daily_nutrition_summary (trigger may have created/updated records)
+  await sql`
+    DELETE FROM daily_nutrition_summary 
+    WHERE user_id = ${userIdStr}
+  `;
+
+  // 3. Delete the user - CASCADE will handle all remaining related data
+  await sql`
+    DELETE FROM users 
+    WHERE id = ${userIdStr}
+  `;
+
+  return user;
+}
+
+async function getDashboardStats() {
+  // Get active users count (clients with is_active = true)
+  const [activeUsersResult] = await sql`
+    SELECT COUNT(*) as count
+    FROM users 
+    WHERE role = 'client' AND is_active = TRUE
+  `;
+  const activeUsers = parseInt(activeUsersResult?.count || 0);
+
+  // Get new registrations this month
+  const [newThisMonthResult] = await sql`
+    SELECT COUNT(*) as count
+    FROM users 
+    WHERE role = 'client' 
+      AND created_at >= DATE_TRUNC('month', CURRENT_DATE)
+      AND created_at < DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month'
+  `;
+  const newThisMonth = parseInt(newThisMonthResult?.count || 0);
+
+  // Get users who logged in today
+  const [loggedInTodayResult] = await sql`
+    SELECT COUNT(*) as count
+    FROM users 
+    WHERE role = 'client' 
+      AND last_login_at >= CURRENT_DATE
+      AND last_login_at < CURRENT_DATE + INTERVAL '1 day'
+  `;
+  const loggedInToday = parseInt(loggedInTodayResult?.count || 0);
+
+  return {
+    activeUsers,
+    newThisMonth,
+    loggedInToday,
+  };
+}
+
 module.exports = {
   createUser,
   findUserByEmail,
@@ -159,4 +231,6 @@ module.exports = {
   getAllAdmins,
   updateUser,
   deleteUser,
+  hardDeleteClient,
+  getDashboardStats,
 };

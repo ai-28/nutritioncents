@@ -65,9 +65,9 @@ export default function Login() {
             const sessionData = await sessionResponse.json();
             const userRole = sessionData?.user?.role;
             
-            // If user is admin, redirect to admin clients page
+            // If user is admin, redirect to admin dashboard
             if (userRole === 'admin') {
-              router.push('/admin/clients');
+              router.push('/admin');
               setLoading(false);
               return;
             }

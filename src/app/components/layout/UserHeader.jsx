@@ -53,17 +53,21 @@ export function UserHeader() {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-3 bg-card border-b border-border">
+    <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-3 border-b border-border" style={{ backgroundColor: '#0f172a' }}>
       <div className="flex items-center gap-3">
         <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="lg:hidden">
+            <Button variant="ghost" size="icon" className="lg:hidden text-white hover:bg-gray-800">
               <Menu className="h-5 w-5" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-[280px] sm:w-[300px]">
+          <SheetContent 
+            side="left" 
+            className="w-[280px] sm:w-[300px] [&>button]:text-white [&>button]:hover:bg-gray-800" 
+            style={{ backgroundColor: '#0f172a' }}
+          >
             <SheetHeader>
-              <SheetTitle>Menu</SheetTitle>
+              <SheetTitle className="text-white">Menu</SheetTitle>
             </SheetHeader>
             <div className="mt-6 space-y-2">
               {menuItems.map((item) => {
@@ -77,19 +81,19 @@ export function UserHeader() {
                     className={cn(
                       "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors",
                       isActive 
-                        ? "bg-primary/10 text-primary font-medium" 
-                        : "hover:bg-accent text-foreground"
+                        ? "bg-gray-800 text-white font-medium" 
+                        : "hover:bg-gray-800 text-gray-400 hover:text-white"
                     )}
                   >
-                    <Icon className={cn("h-5 w-5", isActive ? "text-primary" : "text-muted-foreground")} />
+                    <Icon className={cn("h-5 w-5", isActive ? "text-white" : "text-gray-400")} />
                     <span>{item.label}</span>
                   </Link>
                 );
               })}
-              <div className="pt-4 border-t">
+              <div className="pt-4 border-t border-gray-700">
                 <button
                   onClick={handleSignOut}
-                  className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-destructive/10 text-destructive w-full transition-colors"
+                  className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-400 hover:text-white w-full transition-colors"
                 >
                   <LogOut className="h-5 w-5" />
                   <span className="font-medium">Sign Out</span>
@@ -104,8 +108,8 @@ export function UserHeader() {
             <AvatarFallback className="bg-primary text-primary-foreground">{initials}</AvatarFallback>
           </Avatar>
           <div className="flex flex-col">
-            <span className="font-semibold text-sm">{profile?.full_name || user?.name || 'User'}</span>
-            <span className="text-xs text-muted-foreground">Active now</span>
+            <span className="font-semibold text-sm text-white">{profile?.full_name || user?.name || 'User'}</span>
+            <span className="text-xs text-gray-400">Active now</span>
           </div>
         </Link>
       </div>
