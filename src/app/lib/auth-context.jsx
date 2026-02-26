@@ -17,6 +17,7 @@ export function AuthProvider({ children }) {
         id: session.user.id,
         email: session.user.email,
         name: session.user.name,
+        role: session.user.role,
       });
     } else if (status === 'unauthenticated') {
       setUser(null);

@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,6 +15,7 @@ export default function Login() {
   const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(false);
   const { signIn, signUp } = useAuth();
+  const { data: session, update } = useSession();
   const router = useRouter();
 
   const handleSubmit = async (e) => {
@@ -52,13 +54,36 @@ export default function Login() {
         }
         toast.success('Welcome back!');
         
-        // Check onboarding status
+        // Wait a moment for session to update, then check role
+        await new Promise(resolve => setTimeout(resolve, 100));
+        await update(); // Refresh session
+        
+        // Get user session to check role
+        try {
+          const sessionResponse = await fetch('/api/auth/session');
+          if (sessionResponse.ok) {
+            const sessionData = await sessionResponse.json();
+            const userRole = sessionData?.user?.role;
+            
+            // If user is admin, redirect to admin clients page
+            if (userRole === 'admin') {
+              router.push('/admin/clients');
+              setLoading(false);
+              return;
+            }
+          }
+        } catch (err) {
+          console.error('Error checking user role:', err);
+        }
+        
+        // Check onboarding status for clients
         try {
           const profileResponse = await fetch('/api/client/profile');
           if (profileResponse.ok) {
             const { profile } = await profileResponse.json();
             if (!profile || !profile.onboarding_completed) {
               router.push('/client/onboarding');
+              setLoading(false);
               return;
             }
           }
@@ -67,6 +92,7 @@ export default function Login() {
         }
         
         router.push('/client/dashboard');
+        setLoading(false);
       }
     } catch (err) {
       toast.error(err.message || 'An error occurred');
