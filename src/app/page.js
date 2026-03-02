@@ -19,9 +19,6 @@ import {
   Star
 } from "lucide-react";
 
-// TODO: replace with the real Kickstarter campaign URL when live
-const KICKSTARTER_URL = "https://www.kickstarter.com";
-
 export default function Home() {
   return (
     <div
@@ -56,13 +53,6 @@ export default function Home() {
               </Link>
               <Link href="#comparison" className="text-xl font-medium text-white hover:text-blue-200 transition-all duration-200 hover:scale-105">
                 Why Us
-              </Link>
-              <Link
-                href={KICKSTARTER_URL}
-                target="_blank"
-                className="text-xl font-semibold text-white hover:text-blue-200 transition-all duration-200 hover:scale-105"
-              >
-                Kickstarter
               </Link>
             </div>
             <div className="flex items-center gap-2 sm:gap-3">
@@ -105,14 +95,6 @@ export default function Home() {
                 decisions to help you stay consistent.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start pt-4">
-                <Link href={KICKSTARTER_URL} target="_blank">
-                  <Button
-                    size="lg"
-                    className="cursor-pointer bg-[#58AB4F] text-white rounded-full hover:bg-green-700 text-base sm:text-lg px-6 sm:px-8 py-6 sm:py-7 min-h-[56px] sm:min-h-[60px] shadow-lg shadow-green-300/40"
-                  >
-                    Start Free Trial – Back Us on Kickstarter!
-                  </Button>
-                </Link>
                 <Link href="#how-it-works">
                   <Button
                     size="lg"
@@ -681,13 +663,6 @@ export default function Home() {
               Campaign launches March 9 and ends April 13 —{" "}
               <span className="underline">don&apos;t miss your founder pricing</span>.
             </p>
-            <div className="pt-2">
-              <Link href={KICKSTARTER_URL} target="_blank">
-                <Button className="cursor-pointer bg-[#58AB4F] hover:bg-green-700 text-white rounded-full text-base sm:text-lg px-8 py-6 shadow-lg shadow-green-300/40">
-                  Back Us on Kickstarter
-                </Button>
-              </Link>
-            </div>
           </div>
         </div>
       </section>
@@ -705,15 +680,6 @@ export default function Home() {
             Join users who stay consistent because their smart companion prevents disengagement, not just tracks food.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4 items-stretch sm:items-center">
-            <Link href={KICKSTARTER_URL} target="_blank" className="w-full sm:w-auto">
-              <Button
-                size="lg"
-                className="cursor-pointer rounded-full w-full sm:w-auto bg-[#58AB4F] border-2 border-white text-white hover:bg-green-700 text-base sm:text-lg px-6 sm:px-8 py-6 sm:py-7 min-h-[56px] sm:min-h-[60px]"
-                style={{ borderColor: "#ffffff" }}
-              >
-                Start Free Trial – Back Us on Kickstarter
-              </Button>
-            </Link>
             <Link href="/login" className="w-full sm:w-auto">
               <Button
                 size="lg"
