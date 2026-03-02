@@ -18,9 +18,9 @@ import {
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-blue-50" style={{ backgroundColor: '#eff6ff', minHeight: '100vh' }}>
+    <div className="min-h-screen" style={{ backgroundColor: '#eff6ff', minHeight: '100vh' }}>
       {/* Navigation */}
-      <nav className="sticky top-0 z-50 w-full bg-blue-900" style={{ backgroundColor: '#1e3a8a' }}>
+      <nav className="sticky top-0 z-50 w-full rounded-b-2xl bg-blue-900" style={{ backgroundColor: '#58AB4F' }}>
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-14 sm:h-16 items-center justify-between">
             <div className="flex items-center gap-2">
@@ -48,15 +48,15 @@ export default function Home() {
             </div>
             <div className="flex items-center gap-2 sm:gap-3">
               <Link href="/login" className="hidden sm:block">
-                <Button variant="ghost" size="sm" className="text-white hover:text-blue-200 hover:bg-blue-800/50 transition-all duration-200 hover:scale-105 text-sm sm:text-lg">
+                <Button variant="ghost" size="sm" className="cursor-pointer text-white hover:bg-green-800/50 rounded-full transition-all duration-200 hover:scale-105 text-sm sm:text-lg">
                   Sign In
                 </Button>
               </Link>
-              <Link href="/login">
-                <Button size="sm" className="bg-white text-blue-900 hover:bg-blue-50 hover:scale-105 transition-all duration-200 shadow-md hover:shadow-lg text-sm sm:text-lg px-3 sm:px-4">
+              {/* <Link href="/login">
+                <Button size="sm" className="cursor-pointer bg-[#58AB4F] text-white hover:bg-green-800/50 rounded-full transition-all duration-200 hover:scale-105 text-sm sm:text-lg">
                   Get Started
                 </Button>
-              </Link>
+              </Link> */}
             </div>
           </div>
         </div>
@@ -82,12 +82,12 @@ export default function Home() {
               </p>
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start pt-4">
                 <Link href="/login">
-                  <Button size="lg" className="bg-blue-900 text-white hover:bg-blue-800 text-base sm:text-lg px-6 sm:px-8 py-6 sm:py-7 min-h-[56px] sm:min-h-[60px]">
+                  <Button size="lg" className="cursor-pointer bg-blue-900 text-white rounded-full hover:bg-blue-600 text-base sm:text-lg px-6 sm:px-8 py-6 sm:py-7 min-h-[56px] sm:min-h-[60px]">
                     Start Free Trial
                   </Button>
                 </Link>
                 <Link href="#how-it-works">
-                  <Button size="lg" variant="outline" className="border-2 border-blue-900 text-blue-900 hover:bg-blue-50 text-base sm:text-lg px-6 sm:px-8 py-6 sm:py-7 min-h-[56px] sm:min-h-[60px]">
+                  <Button size="lg" variant="outline" className="rounded-full cursor-pointer border-2 border-blue-900 hover:text-blue text-blue-900 hover:bg-blue-200 text-base sm:text-lg px-6 sm:px-8 py-6 sm:py-7 min-h-[56px] sm:min-h-[60px]">
                     See How It Works
                   </Button>
                 </Link>
@@ -386,12 +386,12 @@ export default function Home() {
           </p>
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4 items-stretch sm:items-center">
             <Link href="/login" className="w-full sm:w-auto">
-              <Button size="lg" className="w-full sm:w-auto bg-white text-blue-900 hover:bg-blue-50 text-base sm:text-lg px-6 sm:px-8 py-6 sm:py-7 min-h-[56px] sm:min-h-[60px]" style={{ backgroundColor: '#ffffff', color: '#1e3a8a' }}>
+              <Button size="lg" className="cursor-pointer rounded-full w-full sm:w-auto bg-white border-2 border-white text-white hover:bg-blue-900 hover:text-white text-base text-[#1e3a8a] sm:text-lg px-6 sm:px-8 py-6 sm:py-7 min-h-[56px] sm:min-h-[60px]" style={{ borderColor: '#ffffff' }}>
                 Start Free Trial
               </Button>
             </Link>
             <Link href="/login" className="w-full sm:w-auto">
-              <Button size="lg" variant="outline" className="w-full sm:w-auto border-2 border-white text-white hover:bg-white/10 hover:text-white text-base text-[#1e3a8a] sm:text-lg px-6 sm:px-8 py-6 sm:py-7 min-h-[56px] sm:min-h-[60px]" style={{ borderColor: '#ffffff' }}>
+              <Button size="lg" variant="outline" className="cursor-pointer rounded-full w-full sm:w-auto border-2 border-white text-white hover:bg-blue-900 hover:text-white text-base text-[#1e3a8a] sm:text-lg px-6 sm:px-8 py-6 sm:py-7 min-h-[56px] sm:min-h-[60px]" style={{ borderColor: '#ffffff' }}>
                 See How It Works
               </Button>
             </Link>

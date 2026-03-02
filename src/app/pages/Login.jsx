@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -103,22 +104,24 @@ export default function Login() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
-        <h1 className="text-3xl font-bold text-foreground mb-2">NutritionCents</h1>
-        
-        <img 
-          src="/assets/logo.png" 
-          alt="NutritionCents Logo" 
-          className="w-24 h-24 object-contain mb-4"
-        />
-        
-        <h2 className="text-xl font-semibold mb-1">
-          {isSignUp ? 'Create an account' : 'Sign In'}
-        </h2>
-        <p className="text-muted-foreground text-sm mb-6">
-          {isSignUp ? 'Welcome to Beta Testing Program' : 'Welcome to Beta Testing Program'}
-        </p>
+        <div className="w-full max-w-sm md:border md:border-border md:rounded-lg md:bg-card md:p-8 md:shadow-md">
+          <Image
+            src="/assets/logo2.png"
+            alt="NutritionCents Logo"
+            width={200}
+            height={80}
+            className="mb-4 object-contain mx-auto"
+            priority
+          />
+          
+          <h2 className="text-xl font-semibold mb-1 text-center">
+            {isSignUp ? 'Create an account' : 'Sign In'}
+          </h2>
+          <p className="text-muted-foreground text-sm mb-6 text-center">
+            {isSignUp ? 'Welcome to NutritionCents Version 1.0' : 'Welcome to NutritionCents Version 1.0'}
+          </p>
 
-        <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4">
+          <form onSubmit={handleSubmit} className="w-full space-y-4">
           {isSignUp && (
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
@@ -177,11 +180,12 @@ export default function Login() {
         </p>
 
         <button
-          onClick={() => setIsSignUp(!isSignUp)}
-          className="mt-4 text-sm text-blue-600 underline hover:text-blue-700"
-        >
-          {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
-        </button>
+            onClick={() => setIsSignUp(!isSignUp)}
+            className="mt-4 text-sm text-blue-600 underline hover:text-blue-700"
+          >
+            {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
+          </button>
+        </div>
       </div>
 {/* 
       <div className="h-48 overflow-hidden">
