@@ -680,7 +680,7 @@ export default function Home() {
             Join users who stay consistent because their smart companion prevents disengagement, not just tracks food.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4 items-stretch sm:items-center">
-            <Link href="/login" className="w-full sm:w-auto">
+            <Link href="#how-it-works" className="w-full sm:w-auto">
               <Button
                 size="lg"
                 variant="outline"
