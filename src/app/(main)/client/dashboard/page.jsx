@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState, useRef, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { UserLayout } from '@/components/layout/UserLayout';
 import { DailyNutritionDisplay } from '@/components/nutrition/DailyNutritionDisplay';
 import { MealCard } from '@/components/nutrition/MealCard';
@@ -11,9 +11,10 @@ import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { DatePickerStrip } from '@/components/ui/date-picker-strip';
 
-export default function DashboardPage() {
+function DashboardPageInner() {
   const { user } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   // Initialize with today's date (same on server and client to avoid hydration mismatch)
   const [selectedDate, setSelectedDate] = useState(() => {
     return new Date().toISOString().split('T')[0];
@@ -26,23 +27,25 @@ export default function DashboardPage() {
   const dataCacheRef = useRef({});
   const hasHydratedRef = useRef(false);
 
-  // Restore from sessionStorage after hydration (client-side only)
+  // Check URL parameter for date (coming from meal save) or default to today
   useEffect(() => {
     if (!hasHydratedRef.current && typeof window !== 'undefined') {
       hasHydratedRef.current = true;
-      const saved = sessionStorage.getItem('dashboard_selectedDate');
-      if (saved) {
-        setSelectedDate(saved);
+      const dateParam = searchParams.get('date');
+      const today = new Date().toISOString().split('T')[0];
+      
+      if (dateParam) {
+        // Coming from meal save - use the date from URL
+        setSelectedDate(dateParam);
+        // Clear the URL parameter to keep URL clean
+        router.replace('/client/dashboard', { scroll: false });
+      } else {
+        // Coming from dashboard tab click - use today
+        setSelectedDate(today);
       }
     }
-  }, []);
+  }, [searchParams, router]);
 
-  // Save selected date to sessionStorage
-  useEffect(() => {
-    if (typeof window !== 'undefined' && hasHydratedRef.current) {
-      sessionStorage.setItem('dashboard_selectedDate', selectedDate);
-    }
-  }, [selectedDate]);
 
   useEffect(() => {
     if (user && !hasCheckedOnboardingRef.current) {
@@ -239,5 +242,21 @@ export default function DashboardPage() {
         </div>
       </div>
     </UserLayout>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense
+      fallback={
+        <UserLayout>
+          <div className="flex items-center justify-center min-h-screen">
+            <div className="text-muted-foreground">Loading...</div>
+          </div>
+        </UserLayout>
+      }
+    >
+      <DashboardPageInner />
+    </Suspense>
   );
 }

@@ -138,7 +138,9 @@ function AddMealPageInner() {
       }
 
       toast.success('Meal saved successfully!');
-      router.push('/client/dashboard');
+      
+      // Redirect to dashboard with the date as URL parameter
+      router.push(`/client/dashboard?date=${selectedDate}`);
     } catch (error) {
       console.error('Save error:', error);
       toast.error(error.message || 'Failed to save meal');

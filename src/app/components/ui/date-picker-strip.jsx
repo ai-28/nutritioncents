@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { format, startOfWeek, addDays, addWeeks, subWeeks, isSameDay, parseISO } from 'date-fns';
+import { format, startOfWeek, addDays, addWeeks, subWeeks, isSameDay, parseISO, isAfter, startOfDay } from 'date-fns';
 
 // Helper to parse date string to local date (avoiding timezone issues)
 function parseLocalDate(dateString) {
@@ -69,9 +69,16 @@ export function DatePickerStrip({ selectedDate, onDateChange, className = '' }) 
   };
 
   const handleNextDay = () => {
-    isNavigatingRef.current = true;
+    const today = startOfDay(new Date());
     const currentSelected = selectedDate ? parseLocalDate(selectedDate) : new Date();
     const nextDay = addDays(currentSelected, 1);
+    
+    // Prevent navigating to future dates
+    if (isAfter(startOfDay(nextDay), today)) {
+      return;
+    }
+    
+    isNavigatingRef.current = true;
     const nextDayString = format(nextDay, 'yyyy-MM-dd');
     
     // Update the selected date
@@ -93,6 +100,14 @@ export function DatePickerStrip({ selectedDate, onDateChange, className = '' }) 
   };
 
   const handleDateClick = (date) => {
+    const today = startOfDay(new Date());
+    const dateToCheck = startOfDay(date);
+    
+    // Prevent selecting future dates
+    if (isAfter(dateToCheck, today)) {
+      return;
+    }
+    
     const dateString = format(date, 'yyyy-MM-dd');
     onDateChange(dateString);
   };
@@ -100,6 +115,7 @@ export function DatePickerStrip({ selectedDate, onDateChange, className = '' }) 
   // Update week start when selected date changes (if it's outside current week)
   // Only update if selected date is truly outside the current week view
   // Skip update if user is actively navigating
+  // Also ensure we don't navigate to future weeks
   useEffect(() => {
     if (isNavigatingRef.current) return;
     
@@ -107,9 +123,17 @@ export function DatePickerStrip({ selectedDate, onDateChange, className = '' }) 
       const selected = parseLocalDate(selectedDate);
       if (!selected) return;
       
+      const today = startOfDay(new Date());
+      const todayWeekStart = startOfWeek(today, { weekStartsOn: 1 });
+      
       setCurrentWeekStart(prev => {
         const weekStart = startOfWeek(selected, { weekStartsOn: 1 });
         const weekEnd = addDays(weekStart, 6);
+        
+        // Don't allow navigation to future weeks
+        if (isAfter(weekStart, todayWeekStart)) {
+          return prev;
+        }
         
         // Check if selected date is outside current week view
         const currentWeekEnd = addDays(prev, 6);
@@ -139,26 +163,28 @@ export function DatePickerStrip({ selectedDate, onDateChange, className = '' }) 
           const dayNum = format(date, 'd');
           
           // Determine if date is today, past, or future
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-          const dateToCompare = new Date(date);
-          dateToCompare.setHours(0, 0, 0, 0);
+          const today = startOfDay(new Date());
+          const dateToCompare = startOfDay(date);
           const isToday = isSameDay(date, today);
           const isPast = dateToCompare < today;
-          const isFuture = dateToCompare > today;
+          const isFuture = isAfter(dateToCompare, today);
+          const isDisabled = isFuture;
 
           return (
             <button
               key={dateStr}
               onClick={() => handleDateClick(date)}
+              disabled={isDisabled}
               className={`
                 flex-1 flex flex-col items-center justify-center py-2 px-1 rounded-lg
                 transition-all duration-200
-                ${isSelected 
-                  ? 'bg-orange-500 text-white' 
-                  : isPast || isToday
-                    ? 'text-gray-700 hover:bg-gray-100' 
-                    : 'text-gray-400 hover:bg-gray-50'
+                ${isDisabled 
+                  ? 'text-gray-300 cursor-not-allowed opacity-50' 
+                  : isSelected 
+                    ? 'bg-orange-500 text-white' 
+                    : isPast || isToday
+                      ? 'text-gray-700 hover:bg-gray-100' 
+                      : 'text-gray-400 hover:bg-gray-50'
                 }
               `}
             >
@@ -171,7 +197,13 @@ export function DatePickerStrip({ selectedDate, onDateChange, className = '' }) 
 
       <button
         onClick={handleNextDay}
-        className="p-1 text-muted-foreground hover:text-foreground transition-colors"
+        disabled={(() => {
+          const today = startOfDay(new Date());
+          const currentSelected = selectedDate ? parseLocalDate(selectedDate) : new Date();
+          const nextDay = addDays(currentSelected, 1);
+          return isAfter(startOfDay(nextDay), today);
+        })()}
+        className="p-1 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
         aria-label="Next day"
       >
         <ChevronRight className="w-5 h-5" />
