@@ -68,7 +68,7 @@ export default function Home() {
           <div className="grid lg:grid-cols-2 gap-8 sm:gap-10 lg:gap-12 items-center">
             <div className="space-y-6 sm:space-y-8 text-center lg:text-left">
               <div className="text-xs sm:text-sm font-medium text-blue-700 uppercase tracking-wide">
-                YOUR AI BEHAVIOR COMPANION
+                YOUR SMART BEHAVIOR COMPANION
               </div>
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-blue-900 leading-tight">
                 The first nutrition app
@@ -78,7 +78,7 @@ export default function Home() {
                 not logging.
               </h1>
               <p className="text-base sm:text-lg lg:text-xl text-blue-800 leading-relaxed max-w-xl mx-auto lg:mx-0">
-                We don't track failure — we prevent disengagement. Our AI applies behavioral psychology at the moment of food decisions to help you stay consistent.
+                We don't track failure — we prevent disengagement. Our smart system applies behavioral psychology at the moment of food decisions to help you stay consistent.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start pt-4">
                 <Link href="/login">
@@ -129,7 +129,7 @@ export default function Home() {
                 Pattern Intelligence
               </h3>
               <p className="text-sm sm:text-base text-blue-800 leading-relaxed">
-                AI learns when you overeat, what triggers spirals, skip→binge cycles, and stress-related eating patterns. Silent, always on.
+                The system gently learns your patterns — when you overeat, what triggers spirals, skip→binge cycles, and stress-related eating. Working quietly in the background, always there when you need it.
               </p>
             </div>
             <div className="p-6 sm:p-8 bg-blue-50 border border-blue-200 rounded-lg hover:shadow-lg transition-shadow">
@@ -173,7 +173,7 @@ export default function Home() {
                 Nutrition GPS
               </h3>
               <p className="text-sm sm:text-base text-blue-800 leading-relaxed">
-                Missed protein? Over calories? AI recalculates the best remaining path. "You're off target. Here's the easiest way to finish strong."
+                Missed protein? Over calories? The system gently recalculates the best remaining path. "You're off target. Here's the easiest way to finish strong."
               </p>
             </div>
             <div className="p-6 sm:p-8 bg-blue-50 border border-blue-200 rounded-lg hover:shadow-lg transition-shadow">
@@ -349,7 +349,7 @@ export default function Home() {
                       { feature: "Behavior Prediction", others: false, us: true },
                       { feature: "Emotional Eating Support", others: false, us: true },
                       { feature: "Shame-Free Recovery", others: false, us: true },
-                      { feature: "AI Intervention Timing", others: false, us: true, highlight: true },
+                      { feature: "Smart Intervention Timing", others: false, us: true, highlight: true },
                       { feature: "Psychology Integration", others: false, us: true },
                     ].map((item, idx) => (
                       <tr key={idx} className={item.highlight ? "bg-blue-50" : ""}>
@@ -370,7 +370,7 @@ export default function Home() {
                 </table>
               </div>
             </div>
-            
+
           </div>
         </div>
       </section>
@@ -382,7 +382,7 @@ export default function Home() {
             Ready for a Companion That Sees the Slip Coming?
           </h2>
           <p className="text-base sm:text-lg lg:text-xl text-blue-50 mb-6 sm:mb-8 max-w-2xl mx-auto px-4 leading-relaxed">
-            Join users who stay consistent because their AI companion prevents disengagement, not just tracks food.
+            Join users who stay consistent because their smart companion prevents disengagement, not just tracks food.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4 items-stretch sm:items-center">
             <Link href="/login" className="w-full sm:w-auto">
@@ -418,7 +418,7 @@ export default function Home() {
                 <span className="text-lg sm:text-xl font-bold text-white">NutritionCents</span>
               </div>
               <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
-                The first nutrition app focused on adherence, not logging. Your AI behavior companion.
+                The first nutrition app focused on adherence, not logging. Your smart behavior companion.
               </p>
             </div>
             <div>
