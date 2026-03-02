@@ -46,7 +46,7 @@ export function MealCard({ mealType, calories = 0, protein = 0, carbs = 0, fats 
     if (onAdd) {
       onAdd();
     } else {
-      router.push(`/meals/add?type=${mealType}`);
+      router.push(`/client/meals/add?type=${mealType}`);
     }
   };
 

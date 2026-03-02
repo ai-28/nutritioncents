@@ -140,7 +140,7 @@ export default function DashboardPage() {
   };
 
   const handleAddMeal = (mealType) => {
-    router.push(`/meals/add?type=${mealType}&date=${selectedDate}`);
+    router.push(`/client/meals/add?type=${mealType}&date=${selectedDate}`);
   };
 
   const handleMealClick = (mealType) => {
