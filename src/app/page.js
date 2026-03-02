@@ -13,14 +13,26 @@ import {
   Clock,
   AlertCircle,
   Zap,
-  Target
+  Target,
+  ListChecks,
+  Watch,
+  Star
 } from "lucide-react";
+
+// TODO: replace with the real Kickstarter campaign URL when live
+const KICKSTARTER_URL = "https://www.kickstarter.com";
 
 export default function Home() {
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#eff6ff', minHeight: '100vh' }}>
+    <div
+      className="min-h-screen"
+      style={{ backgroundColor: "#eff6ff", minHeight: "100vh" }}
+    >
       {/* Navigation */}
-      <nav className="sticky top-0 z-50 w-full rounded-b-2xl bg-blue-900" style={{ backgroundColor: '#58AB4F' }}>
+      <nav
+        className="sticky top-0 z-50 w-full rounded-b-2xl bg-blue-900"
+        style={{ backgroundColor: "#58AB4F" }}
+      >
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-14 sm:h-16 items-center justify-between">
             <div className="flex items-center gap-2">
@@ -45,6 +57,13 @@ export default function Home() {
               <Link href="#comparison" className="text-xl font-medium text-white hover:text-blue-200 transition-all duration-200 hover:scale-105">
                 Why Us
               </Link>
+              <Link
+                href={KICKSTARTER_URL}
+                target="_blank"
+                className="text-xl font-semibold text-white hover:text-blue-200 transition-all duration-200 hover:scale-105"
+              >
+                Kickstarter
+              </Link>
             </div>
             <div className="flex items-center gap-2 sm:gap-3">
               <Link href="/login" className="hidden sm:block">
@@ -63,7 +82,10 @@ export default function Home() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden pt-12 sm:pt-16 lg:pt-20 pb-16 sm:pb-24 lg:pb-32 bg-blue-50" style={{ backgroundColor: '#eff6ff' }}>
+      <section
+        className="relative overflow-hidden pt-12 sm:pt-16 lg:pt-20 pb-16 sm:pb-24 lg:pb-32 bg-blue-50"
+        style={{ backgroundColor: "#eff6ff" }}
+      >
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-8 sm:gap-10 lg:gap-12 items-center">
             <div className="space-y-6 sm:space-y-8 text-center lg:text-left">
@@ -78,20 +100,35 @@ export default function Home() {
                 not logging.
               </h1>
               <p className="text-base sm:text-lg lg:text-xl text-blue-800 leading-relaxed max-w-xl mx-auto lg:mx-0">
-                We don't track failure — we prevent disengagement. Our smart system applies behavioral psychology at the moment of food decisions to help you stay consistent.
+                We don't track failure — we prevent disengagement. Our smart
+                system applies behavioral psychology at the moment of food
+                decisions to help you stay consistent.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start pt-4">
-                <Link href="/login">
-                  <Button size="lg" className="cursor-pointer bg-blue-900 text-white rounded-full hover:bg-blue-600 text-base sm:text-lg px-6 sm:px-8 py-6 sm:py-7 min-h-[56px] sm:min-h-[60px]">
-                    Start Free Trial
+                <Link href={KICKSTARTER_URL} target="_blank">
+                  <Button
+                    size="lg"
+                    className="cursor-pointer bg-[#58AB4F] text-white rounded-full hover:bg-green-700 text-base sm:text-lg px-6 sm:px-8 py-6 sm:py-7 min-h-[56px] sm:min-h-[60px] shadow-lg shadow-green-300/40"
+                  >
+                    Start Free Trial – Back Us on Kickstarter!
                   </Button>
                 </Link>
                 <Link href="#how-it-works">
-                  <Button size="lg" variant="outline" className="rounded-full cursor-pointer border-2 border-blue-900 hover:text-blue text-blue-900 hover:bg-blue-200 text-base sm:text-lg px-6 sm:px-8 py-6 sm:py-7 min-h-[56px] sm:min-h-[60px]">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="rounded-full cursor-pointer border-2 border-blue-900 hover:text-blue text-blue-900 hover:bg-blue-200 text-base sm:text-lg px-6 sm:px-8 py-6 sm:py-7 min-h-[56px] sm:min-h-[60px]"
+                  >
                     See How It Works
                   </Button>
                 </Link>
               </div>
+              <p className="text-xs sm:text-sm text-blue-800/90 max-w-xl mx-auto lg:mx-0">
+                Try our beta free during the campaign. Backers get{" "}
+                <span className="font-semibold">1 year of Premium for $89</span>
+                . No card required to start — let AI predict your nutrition
+                slips before they happen.
+              </p>
             </div>
             <div className="relative order-first lg:order-last">
               <div className="relative rounded-lg overflow-hidden shadow-lg">
@@ -117,89 +154,196 @@ export default function Home() {
               Most Apps Optimize Logging.<br />We Optimize Adherence.
             </h2>
             <p className="text-base sm:text-lg lg:text-xl text-blue-800 max-w-3xl mx-auto px-4 leading-relaxed">
-              This is not a chatbot. It's a decision-support system that sees the slip coming and intervenes before it happens.
+              This is not a chatbot. It's a decision-support system that sees
+              the slip coming and intervenes before it happens — inside an
+              entire community built around adherence, not perfection.
             </p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 max-w-6xl mx-auto">
+            {/* 1. Predictive AI Nudges */}
             <div className="p-6 sm:p-8 bg-blue-50 border border-blue-200 rounded-lg hover:shadow-lg transition-shadow">
-              <div className="p-3 bg-blue-900 text-white rounded-lg w-fit mb-4">
-                <Brain className="w-6 h-6" />
+              <div className="p-3 bg-orange-500 text-white rounded-lg w-fit mb-4">
+                <AlertCircle className="w-6 h-6" />
               </div>
               <h3 className="text-xl font-bold text-blue-900 mb-3">
-                Pattern Intelligence
+                Predictive AI Nudges
               </h3>
               <p className="text-sm sm:text-base text-blue-800 leading-relaxed">
-                The system gently learns your patterns — when you overeat, what triggers spirals, skip→binge cycles, and stress-related eating. Working quietly in the background, always there when you need it.
+                Our AI watches your real patterns — skipped breakfasts, Thursday
+                crashes, late-night scrolling — then sends{" "}
+                <span className="font-semibold">gentle, orange nudges</span>{" "}
+                before the spiral starts. “Hey, this looks like last Thursday.
+                Want a 2-minute win?”
               </p>
             </div>
-            <div className="p-6 sm:p-8 bg-blue-50 border border-blue-200 rounded-lg hover:shadow-lg transition-shadow">
-              <div className="p-3 bg-blue-900 text-white rounded-lg w-fit mb-4">
-                <Clock className="w-6 h-6" />
-              </div>
-              <h3 className="text-xl font-bold text-blue-900 mb-3">
-                Predictive Intervention
-              </h3>
-              <p className="text-sm sm:text-base text-blue-800 leading-relaxed">
-                Instead of reacting after failure, we intervene before the slip. "Hey — Thursdays are tough. Want a fast protein win?"
-              </p>
-            </div>
+
+            {/* 2. Emotional Support */}
             <div className="p-6 sm:p-8 bg-blue-50 border border-blue-200 rounded-lg hover:shadow-lg transition-shadow">
               <div className="p-3 bg-blue-900 text-white rounded-lg w-fit mb-4">
                 <Heart className="w-6 h-6" />
               </div>
               <h3 className="text-xl font-bold text-blue-900 mb-3">
-                Emotional Eating Support
+                Emotional Support, Not Shame
               </h3>
               <p className="text-sm sm:text-base text-blue-800 leading-relaxed">
-                Detects late-night spikes, comfort food clusters, and voice tone stress. Psychology-backed, not therapy.
+                Voice tone, timing, and food patterns hint at stress. We respond
+                with{" "}
+                <span className="font-semibold">
+                  psychology-informed recovery scripts
+                </span>
+                , not red alerts. “Okay, tonight shifted. Let&apos;s protect
+                tomorrow together.”
               </p>
             </div>
+
+            {/* 3. Meal Plans & Grocery Lists */}
             <div className="p-6 sm:p-8 bg-blue-50 border border-blue-200 rounded-lg hover:shadow-lg transition-shadow">
               <div className="p-3 bg-blue-900 text-white rounded-lg w-fit mb-4">
-                <Shield className="w-6 h-6" />
+                <ListChecks className="w-6 h-6" />
               </div>
               <h3 className="text-xl font-bold text-blue-900 mb-3">
-                Recovery Mode
+                Meal Plans & Grocery Lists
               </h3>
               <p className="text-sm sm:text-base text-blue-800 leading-relaxed">
-                No streak loss. No red alerts. When you overeat, goals dynamically adjust. "Today shifted. Let's aim for 60% success."
+                Turn your goals into{" "}
+                <span className="font-semibold">real-world plans</span>. Auto
+                generate simple meal plans and grocery lists that fit your
+                schedule, budget, and protein targets — straight from the app.
               </p>
             </div>
+
+            {/* 4. Community Hub */}
             <div className="p-6 sm:p-8 bg-blue-50 border border-blue-200 rounded-lg hover:shadow-lg transition-shadow">
               <div className="p-3 bg-blue-900 text-white rounded-lg w-fit mb-4">
-                <Target className="w-6 h-6" />
+                <Users className="w-6 h-6" />
               </div>
               <h3 className="text-xl font-bold text-blue-900 mb-3">
-                Nutrition GPS
+                Community Hub
               </h3>
               <p className="text-sm sm:text-base text-blue-800 leading-relaxed">
-                Missed protein? Over calories? The system gently recalculates the best remaining path. "You're off target. Here's the easiest way to finish strong."
+                Join the{" "}
+                <span className="font-semibold">ENTIRE NutritionCents community</span>{" "}
+                — live Zoom classes, cooking sessions, support groups, and
+                podcasts. You&apos;re not “going on a diet”; you&apos;re joining
+                a practice.
               </p>
             </div>
+
+            {/* 5. Wearable & Device Integration */}
             <div className="p-6 sm:p-8 bg-blue-50 border border-blue-200 rounded-lg hover:shadow-lg transition-shadow">
               <div className="p-3 bg-blue-900 text-white rounded-lg w-fit mb-4">
-                <TrendingUp className="w-6 h-6" />
+                <Watch className="w-6 h-6" />
               </div>
               <h3 className="text-xl font-bold text-blue-900 mb-3">
-                Gets More Reliable Over Time
+                Wearables, CGM & Offline Days
               </h3>
               <p className="text-sm sm:text-base text-blue-800 leading-relaxed">
-                Explicitly designed to get more accurate as it learns you. Your companion that truly understands your patterns.
+                Designed to plug into{" "}
+                <span className="font-semibold">wearables and CGMs</span> as we
+                grow — and still work when you vanish for three days. No guilt
+                pings, just smart catch-up when you&apos;re ready.
               </p>
             </div>
+
+            {/* 6. Research-Backed Insights */}
+            <div className="p-6 sm:p-8 bg-blue-50 border border-blue-200 rounded-lg hover:shadow-lg transition-shadow">
+              <div className="p-3 bg-blue-900 text-white rounded-lg w-fit mb-4">
+                <BarChart3 className="w-6 h-6" />
+              </div>
+              <h3 className="text-xl font-bold text-blue-900 mb-3">
+                Research-Backed Insights
+              </h3>
+              <p className="text-sm sm:text-base text-blue-800 leading-relaxed">
+                Monthly graphs, habit streaks, and trends inspired by{" "}
+                <span className="font-semibold">
+                  elite diabetes and behavior research
+                </span>
+                . You don&apos;t just see macros — you see patterns that
+                actually matter.
+              </p>
+            </div>
+          </div>
+
+          {/* Community + Kickstarter tie-in */}
+          <div className="mt-12 sm:mt-16 max-w-4xl mx-auto text-center space-y-6">
+            <h3 className="text-2xl sm:text-3xl font-bold text-blue-900">
+              The NutritionCents Community
+            </h3>
+            <p className="text-sm sm:text-base lg:text-lg text-blue-800 leading-relaxed max-w-3xl mx-auto">
+              Live coaching, Zoom cooking nights, peer support channels, podcast
+              drops, and challenges that reward{" "}
+              <span className="font-semibold">consistency</span> over
+              perfection. Earn badges for streaks, recovery days, and “Thursday
+              saves” — not just for eating salad.
+            </p>
+            <div className="grid sm:grid-cols-3 gap-4 text-left text-sm sm:text-base">
+              <div className="p-4 rounded-lg bg-blue-50 border border-blue-100">
+                <div className="flex items-center gap-2 mb-2">
+                  <Users className="w-4 h-4 text-blue-700" />
+                  <span className="font-semibold text-blue-900">
+                    Live Coaching
+                  </span>
+                </div>
+                <p className="text-blue-800 text-sm">
+                  Weekly group calls and Q&amp;A to troubleshoot your real
+                  schedule and roadblocks.
+                </p>
+              </div>
+              <div className="p-4 rounded-lg bg-blue-50 border border-blue-100">
+                <div className="flex items-center gap-2 mb-2">
+                  <BookOpen className="w-4 h-4 text-blue-700" />
+                  <span className="font-semibold text-blue-900">
+                    Zoom Cooking & Workshops
+                  </span>
+                </div>
+                <p className="text-blue-800 text-sm">
+                  Learn fast meals, grocery shortcuts, and “damage-control”
+                  strategies you&apos;ll actually use.
+                </p>
+              </div>
+              <div className="p-4 rounded-lg bg-blue-50 border border-blue-100">
+                <div className="flex items-center gap-2 mb-2">
+                  <Star className="w-4 h-4 text-orange-500" />
+                  <span className="font-semibold text-blue-900">
+                    Gamified Progress
+                  </span>
+                </div>
+                <p className="text-blue-800 text-sm">
+                  Earn badges for consistency, recovery days, and checking in
+                  when life gets messy — not for being perfect.
+                </p>
+              </div>
+            </div>
+            <p className="text-sm sm:text-base text-blue-900 font-medium">
+              <span className="font-semibold">
+                Back our Kickstarter to unlock early access
+              </span>{" "}
+              to the community, live events, and founder-led onboarding.
+            </p>
+            <p className="text-xs sm:text-sm text-blue-700">
+              “Early beta user: <span className="italic">
+                Finally, an app that actually understands my Thursdays.
+              </span>
+              ”
+            </p>
           </div>
         </div>
       </section>
 
       {/* Core Functions */}
-      <section id="services" className="py-12 sm:py-16 lg:py-24 bg-blue-50" style={{ backgroundColor: '#eff6ff' }}>
+      <section
+        id="services"
+        className="py-12 sm:py-16 lg:py-24 bg-blue-50"
+        style={{ backgroundColor: "#eff6ff" }}
+      >
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8 sm:mb-12 lg:mb-16">
             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-blue-900 mb-3 sm:mb-4 px-4">
               Everything You Need to Track
             </h2>
             <p className="text-base sm:text-lg text-blue-800 max-w-3xl mx-auto px-4 leading-relaxed">
-              This is table stakes. Your advantage starts after this.
+              This is table stakes. Your advantage starts after this — but we
+              still give you a clean, powerful engine.
             </p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 max-w-6xl mx-auto">
@@ -213,7 +357,9 @@ export default function Home() {
                     Multiple Input Methods
                   </h3>
                   <p className="text-sm sm:text-base text-blue-800 leading-relaxed">
-                    Text logging, voice logging, food image recognition, and barcode scanning. Log however works for you.
+                    Text logging, voice logging, food image recognition, and
+                    barcode scanning. Log however works for you — earn small
+                    points for simply checking in.
                   </p>
                 </div>
               </div>
@@ -228,7 +374,11 @@ export default function Home() {
                     Complete Nutrition Engine
                   </h3>
                   <p className="text-sm sm:text-base text-blue-800 leading-relaxed">
-                    Macros, micros, custom goals (fat loss, muscle gain, health), and weekly & monthly trends.
+                    Macros, micros, custom goals (fat loss, muscle gain,
+                    health), and weekly &amp; monthly trends — with summaries
+                    focused on{" "}
+                    <span className="font-semibold">“What to do next”</span>,
+                    not just what you did wrong.
                   </p>
                 </div>
               </div>
@@ -243,7 +393,13 @@ export default function Home() {
                     Smart Dashboard
                   </h3>
                   <p className="text-sm sm:text-base text-blue-800 leading-relaxed">
-                    Macro breakdown, weekly consistency graph, protein & water focus indicators, and trend arrows.
+                    Macro breakdown, weekly consistency graph, protein &amp;
+                    water focus indicators, and trend arrows with{" "}
+                    <span className="font-semibold">
+                      gentle, color-coded nudges
+                    </span>{" "}
+                    (green when you&apos;re on track, orange when it&apos;s time
+                    to course-correct).
                   </p>
                 </div>
               </div>
@@ -257,10 +413,89 @@ export default function Home() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8 sm:mb-12 lg:mb-16">
             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-blue-900 mb-3 sm:mb-4 px-4">
-              How It Works: A Real Example
+              How It Works
             </h2>
+            <p className="text-base sm:text-lg text-blue-800 max-w-3xl mx-auto px-4 leading-relaxed">
+              A simple onboarding flow designed to{" "}
+              <span className="font-semibold">
+                predict where you&apos;ll slip
+              </span>{" "}
+              — then support you before it happens.
+            </p>
           </div>
+
+          {/* Onboarding / flow steps */}
+          <div className="max-w-5xl mx-auto mb-12 sm:mb-16">
+            <div className="grid md:grid-cols-2 gap-6 sm:gap-8">
+              {[
+                {
+                  step: "01",
+                  title: "Welcome & Intent",
+                  body: "Share your goals in plain language: lose fat, stabilize energy, support diabetes, or just feel better in your clothes."
+                },
+                {
+                  step: "02",
+                  title: "Profile & Baseline",
+                  body: "We collect basics (age, weight, movement, meds) and your typical week — not just macros."
+                },
+                {
+                  step: "03",
+                  title: "Behavior & Triggers",
+                  body: "Identify your danger zones: late nights, weekends, travel, stress days. This trains our prediction engine."
+                },
+                {
+                  step: "04",
+                  title: "Goals & Guardrails",
+                  body: "Set flexible targets (protein, calories, CGM range). We build a plan that expects real life, not perfection."
+                },
+                {
+                  step: "05",
+                  title: "Daily Check-ins",
+                  body: "Log with text, voice, images, or barcode. Short nudges keep you on track without nagging."
+                },
+                {
+                  step: "06",
+                  title: "Predictive Nudges",
+                  body: "As patterns emerge, the app nudges you before your usual slips with fast options you&apos;ll actually do."
+                },
+                {
+                  step: "07",
+                  title: "Gamified Wins",
+                  body: "Earn points, streaks, and badges for consistency and recovery days, not just for perfect logging."
+                },
+                {
+                  step: "08",
+                  title: "Community & Coaching",
+                  body: "Join live sessions, get feedback, and stay engaged with people solving the same problems you are."
+                }
+              ].map((item) => (
+                <div
+                  key={item.step}
+                  className="p-6 sm:p-7 bg-blue-50 border border-blue-100 rounded-lg flex gap-4"
+                >
+                  <div className="flex-shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-blue-900 text-white flex items-center justify-center text-sm font-semibold">
+                      {item.step}
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-lg sm:text-xl font-bold text-blue-900 mb-1">
+                      {item.title}
+                    </h3>
+                    <p className="text-sm sm:text-base text-blue-800 leading-relaxed">
+                      {item.body}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Real Thursday example */}
           <div className="max-w-4xl mx-auto">
+            <h3 className="text-xl sm:text-2xl font-bold text-blue-900 mb-4 text-center">
+              A Real Thursday Example
+            </h3>
             <div className="space-y-6 sm:space-y-8">
               <div className="p-6 sm:p-8 bg-blue-50 border-l-4 border-blue-900 rounded-lg">
                 <div className="flex items-start gap-4">
@@ -268,15 +503,21 @@ export default function Home() {
                     <Clock className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="text-lg sm:text-xl font-bold text-blue-900 mb-2">Day 23: Thursday 6pm</h3>
+                    <h4 className="text-lg sm:text-xl font-bold text-blue-900 mb-2">
+                      Day 23: Thursday 6pm
+                    </h4>
                     <p className="text-sm sm:text-base text-blue-800 leading-relaxed mb-3">
-                      You skipped breakfast. Protein is low. Past pattern detected: takeout binge risk.
+                      You skipped breakfast. Protein is low. Past pattern
+                      detected: takeout binge risk.
                     </p>
                     <div className="bg-white p-4 rounded-lg border border-blue-200">
                       <p className="text-sm sm:text-base text-blue-900 font-medium italic">
-                        "Hey — Thursdays are usually tough. Want a fast protein win or a 'damage-control' dinner?"
+                        &quot;Hey — Thursdays are usually tough. Want a fast
+                        protein win or a &apos;damage-control&apos; dinner?&quot;
                       </p>
-                      <p className="text-xs sm:text-sm text-blue-700 mt-2">No macros. No guilt. Just help.</p>
+                      <p className="text-xs sm:text-sm text-blue-700 mt-2">
+                        No macros. No guilt. Just help.
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -287,15 +528,20 @@ export default function Home() {
                     <Heart className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="text-lg sm:text-xl font-bold text-blue-900 mb-2">Later That Night</h3>
+                    <h4 className="text-lg sm:text-xl font-bold text-blue-900 mb-2">
+                      Later That Night
+                    </h4>
                     <p className="text-sm sm:text-base text-blue-800 leading-relaxed mb-3">
                       You ate pizza. You logged it.
                     </p>
                     <div className="bg-white p-4 rounded-lg border border-blue-200">
                       <p className="text-sm sm:text-base text-blue-900 font-medium italic">
-                        "Okay. Let's switch to recovery mode. One glass of water + normal dinner tomorrow."
+                        &quot;Okay. Let&apos;s switch to recovery mode. One
+                        glass of water + normal dinner tomorrow.&quot;
                       </p>
-                      <p className="text-xs sm:text-sm text-blue-700 mt-2">No streak loss. No red alerts. You feel safe. You stay.</p>
+                      <p className="text-xs sm:text-sm text-blue-700 mt-2">
+                        No streak loss. No red alerts. You feel safe. You stay.
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -306,7 +552,10 @@ export default function Home() {
       </section>
 
       {/* Banner Image Section */}
-      <section className="py-8 sm:py-12 lg:py-16 bg-blue-50" style={{ backgroundColor: '#eff6ff' }}>
+      <section
+        className="py-8 sm:py-12 lg:py-16 bg-blue-50"
+        style={{ backgroundColor: "#eff6ff" }}
+      >
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="relative rounded-lg overflow-hidden shadow-lg">
             <Image
@@ -321,7 +570,11 @@ export default function Home() {
       </section>
 
       {/* Competitive Comparison */}
-      <section id="comparison" className="py-12 sm:py-16 lg:py-24 bg-blue-50" style={{ backgroundColor: '#eff6ff' }}>
+      <section
+        id="comparison"
+        className="py-12 sm:py-16 lg:py-24 bg-blue-50"
+        style={{ backgroundColor: "#eff6ff" }}
+      >
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-5xl mx-auto">
             <div className="text-center mb-8 sm:mb-12">
@@ -375,8 +628,75 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Kickstarter Funnel Section */}
+      <section className="py-12 sm:py-16 lg:py-24 bg-white">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-5xl mx-auto text-center space-y-6 sm:space-y-8">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-blue-900 px-4">
+              Back the Kickstarter. Build the Future of Adherence.
+            </h2>
+            <p className="text-base sm:text-lg lg:text-xl text-blue-800 max-w-3xl mx-auto leading-relaxed">
+              We&apos;re using this campaign to{" "}
+              <span className="font-semibold">
+                polish the app, expand our research, and grow the community
+              </span>{" "}
+              that helps people stay engaged when life gets messy.
+            </p>
+            <div className="grid md:grid-cols-2 gap-6 sm:gap-8 text-left max-w-4xl mx-auto">
+              <div className="p-6 sm:p-7 rounded-lg bg-blue-50 border border-blue-100">
+                <h3 className="text-lg sm:text-xl font-bold text-blue-900 mb-3">
+                  Backer Perks (Examples)
+                </h3>
+                <ul className="list-disc list-inside text-sm sm:text-base text-blue-800 space-y-2">
+                  <li>
+                    <span className="font-semibold">$89 Tier:</span> 1 year of
+                    NutritionCents Premium + early beta access.
+                  </li>
+                  <li>
+                    <span className="font-semibold">$175 Tier:</span> 2 years
+                    Premium +{" "}
+                    <span className="font-semibold">
+                      1:1 coaching call with the founding team
+                    </span>
+                    .
+                  </li>
+                  <li>
+                    Founder-only Q&amp;A sessions, behind-the-scenes roadmap,
+                    and community badges for early supporters.
+                  </li>
+                </ul>
+              </div>
+              <div className="p-6 sm:p-7 rounded-lg bg-blue-50 border border-blue-100">
+                <h3 className="text-lg sm:text-xl font-bold text-blue-900 mb-3">
+                  How We&apos;ll Use the Funds
+                </h3>
+                <ul className="list-disc list-inside text-sm sm:text-base text-blue-800 space-y-2">
+                  <li>$25k – App polish, stability, and wearable integrations.</li>
+                  <li>$15k – Community content, live coaching, and production.</li>
+                  <li>$10k – Marketing, research collaborations, and outreach.</li>
+                </ul>
+              </div>
+            </div>
+            <p className="text-sm sm:text-base text-orange-600 font-semibold">
+              Campaign launches March 9 and ends April 13 —{" "}
+              <span className="underline">don&apos;t miss your founder pricing</span>.
+            </p>
+            <div className="pt-2">
+              <Link href={KICKSTARTER_URL} target="_blank">
+                <Button className="cursor-pointer bg-[#58AB4F] hover:bg-green-700 text-white rounded-full text-base sm:text-lg px-8 py-6 shadow-lg shadow-green-300/40">
+                  Back Us on Kickstarter
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Final CTA */}
-      <section className="py-12 sm:py-16 lg:py-24 bg-blue-900 text-white" style={{ backgroundColor: '#1e3a8a' }}>
+      <section
+        className="py-12 sm:py-16 lg:py-24 bg-blue-900 text-white"
+        style={{ backgroundColor: "#1e3a8a" }}
+      >
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 px-4 leading-tight">
             Ready for a Companion That Sees the Slip Coming?
@@ -385,25 +705,38 @@ export default function Home() {
             Join users who stay consistent because their smart companion prevents disengagement, not just tracks food.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4 items-stretch sm:items-center">
-            <Link href="/login" className="w-full sm:w-auto">
-              <Button size="lg" className="cursor-pointer rounded-full w-full sm:w-auto bg-white border-2 border-white text-white hover:bg-blue-900 hover:text-white text-base text-[#1e3a8a] sm:text-lg px-6 sm:px-8 py-6 sm:py-7 min-h-[56px] sm:min-h-[60px]" style={{ borderColor: '#ffffff' }}>
-                Start Free Trial
+            <Link href={KICKSTARTER_URL} target="_blank" className="w-full sm:w-auto">
+              <Button
+                size="lg"
+                className="cursor-pointer rounded-full w-full sm:w-auto bg-[#58AB4F] border-2 border-white text-white hover:bg-green-700 text-base sm:text-lg px-6 sm:px-8 py-6 sm:py-7 min-h-[56px] sm:min-h-[60px]"
+                style={{ borderColor: "#ffffff" }}
+              >
+                Start Free Trial – Back Us on Kickstarter
               </Button>
             </Link>
             <Link href="/login" className="w-full sm:w-auto">
-              <Button size="lg" variant="outline" className="cursor-pointer rounded-full w-full sm:w-auto border-2 border-white text-white hover:bg-blue-900 hover:text-white text-base text-[#1e3a8a] sm:text-lg px-6 sm:px-8 py-6 sm:py-7 min-h-[56px] sm:min-h-[60px]" style={{ borderColor: '#ffffff' }}>
+              <Button
+                size="lg"
+                variant="outline"
+                className="cursor-pointer rounded-full w-full sm:w-auto border-2 border-white text-white hover:bg-blue-900 hover:text-white text-base text-[#1e3a8a] sm:text-lg px-6 sm:px-8 py-6 sm:py-7 min-h-[56px] sm:min-h-[60px]"
+                style={{ borderColor: "#ffffff" }}
+              >
                 See How It Works
               </Button>
             </Link>
           </div>
           <p className="text-sm sm:text-base text-blue-200 mt-6 sm:mt-8 max-w-xl mx-auto px-4">
-            No credit card required. Start building better habits today.
+            No credit card required to join the beta. Help us build the app
+            that finally understands your real life.
           </p>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-slate-900 text-slate-300 py-8 sm:py-12" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>
+      <footer
+        className="bg-slate-900 text-slate-300 py-8 sm:py-12"
+        style={{ backgroundColor: "#0f172a", color: "#cbd5e1" }}
+      >
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 mb-6 sm:mb-8">
             <div className="col-span-2 sm:col-span-2 md:col-span-1">
