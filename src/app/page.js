@@ -56,8 +56,8 @@ export default function Home() {
               </Link>
             </div>
             <div className="flex items-center gap-2 sm:gap-3">
-              <Link href="/login" className="hidden sm:block">
-                <Button variant="ghost" size="sm" className="cursor-pointer text-white hover:bg-green-800/50 rounded-full transition-all duration-200 hover:scale-105 text-sm sm:text-lg">
+              <Link href="/login">
+                <Button variant="ghost" size="sm" className="cursor-pointer text-white hover:bg-green-800/50 rounded-full transition-all duration-200 hover:scale-105 text-xs sm:text-sm md:text-lg px-2 sm:px-3 py-1 sm:py-2">
                   Sign In
                 </Button>
               </Link>
