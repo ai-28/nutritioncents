@@ -55,7 +55,7 @@ export default function Home() {
                 Why Us
               </Link>
             </div>
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div className="hidden md:flex items-center gap-2 sm:gap-3">
               <Link href="/login">
                 <Button variant="ghost" size="sm" className="cursor-pointer text-white hover:bg-green-800/50 rounded-full transition-all duration-200 hover:scale-105 text-base sm:text-sm md:text-lg px-2 sm:px-3 py-1 sm:py-2">
                   Sign In
@@ -79,8 +79,21 @@ export default function Home() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-8 sm:gap-10 lg:gap-12 items-center">
             <div className="space-y-6 sm:space-y-8 text-center lg:text-left">
-              <div className="text-xs sm:text-sm font-medium text-blue-700 uppercase tracking-wide">
+              <div className="sm:hidden text-3xl font-bold tracking-tight text-blue-900 leading-tight">
+                Welcome to V.1.0 beta
+              </div>
+              <div className="hidden sm:block text-xs sm:text-sm font-medium text-blue-700 uppercase tracking-wide">
                 YOUR SMART BEHAVIOR COMPANION
+              </div>
+              <div className="sm:hidden">
+                <Link href="/login">
+                  <Button
+                    size="lg"
+                    className="rounded-full cursor-pointer bg-[#58AB4F] text-white hover:bg-green-800/50 text-lg px-8 py-6 min-h-[56px]"
+                  >
+                    Signin
+                  </Button>
+                </Link>
               </div>
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-blue-900 leading-tight">
                 The first nutrition app
