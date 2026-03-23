@@ -672,10 +672,6 @@ export default function Home() {
                 </ul>
               </div>
             </div>
-            <p className="text-sm sm:text-base text-orange-600 font-semibold">
-              Campaign launches March 9 and ends April 13 —{" "}
-              <span className="underline">don&apos;t miss your founder pricing</span>.
-            </p>
           </div>
         </div>
       </section>
